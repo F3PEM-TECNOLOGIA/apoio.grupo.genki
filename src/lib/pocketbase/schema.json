@@ -1,0 +1,1709 @@
+{
+  "generatedAt": "2026-08-24T21:34:44.628Z",
+  "collections": [
+    {
+      "name": "users",
+      "type": "auth",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || id = @request.auth.id)",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "avatar",
+          "type": "file",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "role",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["admin", "gestor", "profissional_saude", "colaborador"]
+        },
+        {
+          "name": "funcionario_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "employees"
+        },
+        {
+          "name": "perfil",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["GESTOR", "RH", "ATENDENTE"]
+        },
+        {
+          "name": "registro_profissional",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tipo_profissional",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["ENFERMEIRO", "MEDICO"]
+        },
+        {
+          "name": "unidade_regiao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
+        "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''"
+      ]
+    },
+    {
+      "name": "employees",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || @request.auth.funcionario_id.id = id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || @request.auth.funcionario_id.id = id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || @request.auth.funcionario_id.id = id)",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "nome",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cpf",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "matricula",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "cargo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "departamento",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "unidade",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_admissao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_nascimento",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "genero",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["masculino", "feminino", "outro", "nao_informado"]
+        },
+        {
+          "name": "telefone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "risco_ocupacional",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["baixo", "medio", "alto"]
+        },
+        {
+          "name": "gerente_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "consentimento_lgpd",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_consentimento",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["ativo", "inativo"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_employees_cpf ON employees (cpf) WHERE cpf != ''",
+        "CREATE UNIQUE INDEX idx_employees_matricula ON employees (matricula) WHERE matricula != ''",
+        "CREATE INDEX idx_employees_dept ON employees (departamento)",
+        "CREATE INDEX idx_employees_status ON employees (status)",
+        "CREATE INDEX idx_employees_gerente ON employees (gerente_id)"
+      ]
+    },
+    {
+      "name": "monitoring_flows",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || colaborador_id.id = @request.auth.funcionario_id.id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || colaborador_id.id = @request.auth.funcionario_id.id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || colaborador_id.id = @request.auth.funcionario_id.id)",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "colaborador_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "employees"
+        },
+        {
+          "name": "ciclo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status_global",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["em_andamento", "concluido", "pausado"]
+        },
+        {
+          "name": "data_inicio",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_flows_colab ON monitoring_flows (colaborador_id)",
+        "CREATE INDEX idx_flows_status ON monitoring_flows (status_global)",
+        "CREATE INDEX idx_flows_ciclo ON monitoring_flows (ciclo)"
+      ]
+    },
+    {
+      "name": "flow_steps",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "fluxo_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "monitoring_flows"
+        },
+        {
+          "name": "etapa",
+          "type": "number",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["pendente", "em_andamento", "concluido"]
+        },
+        {
+          "name": "data_conclusao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_flowsteps_fluxo ON flow_steps (fluxo_id)",
+        "CREATE INDEX idx_flowsteps_etapa ON flow_steps (etapa)"
+      ]
+    },
+    {
+      "name": "health_assessments",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "fluxo_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "monitoring_flows"
+        },
+        {
+          "name": "peso",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "altura",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "fumante",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "hipertensao",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "diabetes",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "colesterol_alto",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "doenca_cronica",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "medicamentos",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE UNIQUE INDEX idx_health_fluxo ON health_assessments (fluxo_id)"]
+    },
+    {
+      "name": "exams",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude')",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "fluxo_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "monitoring_flows"
+        },
+        {
+          "name": "tipo_exame",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "sangue",
+            "urina",
+            "audiometria",
+            "eletrocardiograma",
+            "espirometria",
+            "oftalmologico"
+          ]
+        },
+        {
+          "name": "data_agendamento",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_realizacao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["agendado", "realizado", "laudo_emitido"]
+        },
+        {
+          "name": "resultado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_exams_fluxo ON exams (fluxo_id)",
+        "CREATE INDEX idx_exams_status ON exams (status)"
+      ]
+    },
+    {
+      "name": "medical_reports",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'profissional_saude')",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "fluxo_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "monitoring_flows"
+        },
+        {
+          "name": "diagnostico",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "classificacao_risco",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["baixo", "medio", "alto"]
+        },
+        {
+          "name": "aptidao",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["apto", "apto_com_restricao", "inapto_temporario", "inapto"]
+        },
+        {
+          "name": "recomendacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "profissional_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "data_emissao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_reports_fluxo ON medical_reports (fluxo_id)",
+        "CREATE INDEX idx_reports_risco ON medical_reports (classificacao_risco)"
+      ]
+    },
+    {
+      "name": "followup_plans",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "fluxo_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "monitoring_flows"
+        },
+        {
+          "name": "acao",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "responsavel",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["colaborador", "gestor", "profissional"]
+        },
+        {
+          "name": "prazo",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["pendente", "concluida"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_followup_fluxo ON followup_plans (fluxo_id)",
+        "CREATE INDEX idx_followup_status ON followup_plans (status)"
+      ]
+    },
+    {
+      "name": "satisfaction_surveys",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || fluxo_id.colaborador_id.id = @request.auth.funcionario_id.id)",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "fluxo_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "monitoring_flows"
+        },
+        {
+          "name": "canais",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["email", "whatsapp"]
+        },
+        {
+          "name": "status_envio",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["pendente", "enviado_simulado", "respondida", "expirado"]
+        },
+        {
+          "name": "enviado_em",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nps",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "satisfacao",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "feedback",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "respondida_em",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_surveys_fluxo ON satisfaction_surveys (fluxo_id)",
+        "CREATE INDEX idx_surveys_status ON satisfaction_surveys (status_envio)"
+      ]
+    },
+    {
+      "name": "evaluations",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'admin' || @request.auth.role = 'gestor' || @request.auth.role = 'profissional_saude')",
+        "update": "@request.auth.id != '' && @request.auth.role = 'admin'",
+        "delete": "@request.auth.id != '' && @request.auth.role = 'admin'"
+      },
+      "fields": [
+        {
+          "name": "destinatario",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "tipo",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["email", "whatsapp"]
+        },
+        {
+          "name": "conteudo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["simulado_enviado", "falha_simulada"]
+        },
+        {
+          "name": "enviado_em",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "criado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_evaluations_tipo ON evaluations (tipo)",
+        "CREATE INDEX idx_evaluations_enviado ON evaluations (enviado_em)"
+      ]
+    },
+    {
+      "name": "lotes_selecao",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "lote_id",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "data_selecao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["IMPORTADO", "PROCESSADO", "ERRO"]
+        },
+        {
+          "name": "total_beneficiarios",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "custo_total",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "criado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_lotes_lote_id ON lotes_selecao (lote_id)",
+        "CREATE INDEX idx_lotes_status ON lotes_selecao (status)"
+      ]
+    },
+    {
+      "name": "planos_acao",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "necessidade_identificada",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "objetivo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "acao_tomada",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prazo_acao_dias",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "prioridade",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["BAIXA", "MEDIA", "ALTA", "URGENTE"]
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_planos_prioridade ON planos_acao (prioridade)",
+        "CREATE INDEX idx_planos_ativo ON planos_acao (ativo)"
+      ]
+    },
+    {
+      "name": "beneficiarios",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "id_externo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome_beneficiario",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "matricula",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "unidade_regiao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tipo_vinculo",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["TITULAR", "DEPENDENTE"]
+        },
+        {
+          "name": "faixa_etaria",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "telefone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "celular",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "custo_12_meses",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_selecao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "lote_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "lotes_selecao"
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["ELEGIVEL", "SELECIONADO", "EM_ATENDIMENTO", "ATENDIDO", "INATIVO"]
+        },
+        {
+          "name": "condicao_principal",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "risco",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["BAIXO", "MEDIO", "ALTO", "CRITICO"]
+        },
+        {
+          "name": "permite_contato_whatsapp_sms",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "selecionado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "data_selecao_gestao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "atendente_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "data_distribuicao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "titular_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "beneficiarios"
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_beneficiarios_matr ON beneficiarios (matricula)",
+        "CREATE INDEX idx_beneficiarios_status ON beneficiarios (status)",
+        "CREATE INDEX idx_beneficiarios_risco ON beneficiarios (risco)",
+        "CREATE INDEX idx_beneficiarios_atendente ON beneficiarios (atendente_id)",
+        "CREATE INDEX idx_beneficiarios_lote ON beneficiarios (lote_id)"
+      ]
+    },
+    {
+      "name": "controle_programas",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "beneficiario_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "beneficiarios"
+        },
+        {
+          "name": "condicao_principal",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "risco",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["BAIXO", "MEDIO", "ALTO", "CRITICO"]
+        },
+        {
+          "name": "data_selecao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "responsavel",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_programas_beneficiario ON controle_programas (beneficiario_id)",
+        "CREATE INDEX idx_programas_risco ON controle_programas (risco)"
+      ]
+    },
+    {
+      "name": "fichas_atendimento",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "",
+        "create": "@request.auth.id != ''",
+        "update": "",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "ficha_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "beneficiario_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "beneficiarios"
+        },
+        {
+          "name": "atendente_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "plano_acao_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "planos_acao"
+        },
+        {
+          "name": "controle_programa_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "controle_programas"
+        },
+        {
+          "name": "meio_contato",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["LIGACAO_TELEFONICA", "WHATSAPP", "EMAIL", "SMS"]
+        },
+        {
+          "name": "condicao_principal",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_contato",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "risco",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["BAIXO", "MEDIO", "ALTO", "CRITICO"]
+        },
+        {
+          "name": "status_contato",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["ATENDIDO", "OCUPADO", "SEM_RESPOSTA", "CONTATO_INCORRETO"]
+        },
+        {
+          "name": "descricao_atendimento",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_proximo_contato",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "responsavel",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "meta",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "pendencias",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status_geral",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "EM_ACOMPANHAMENTO",
+            "ALTA",
+            "DESISTENCIA",
+            "AGUARDANDO_RETORNO",
+            "PROXIMO_CONTATO"
+          ]
+        },
+        {
+          "name": "data_alta",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "feedback",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_envio_pesquisa",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_resposta_pesquisa",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "versao",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_fichas_beneficiario ON fichas_atendimento (beneficiario_id)",
+        "CREATE INDEX idx_fichas_atendente ON fichas_atendimento (atendente_id)",
+        "CREATE INDEX idx_fichas_status ON fichas_atendimento (status_geral)",
+        "CREATE INDEX idx_fichas_risco ON fichas_atendimento (risco)"
+      ]
+    },
+    {
+      "name": "historico_fichas",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "ficha_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "fichas_atendimento"
+        },
+        {
+          "name": "dados_anteriores",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "campo_alterado",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "valor_anterior",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "valor_novo",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "alterado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": ["CREATE INDEX idx_historico_ficha ON historico_fichas (ficha_id)"]
+    },
+    {
+      "name": "apontamentos_rh",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "lote_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "lotes_selecao"
+        },
+        {
+          "name": "tipo_apontamento",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["SELECAO", "EVOLUCAO", "VOLUMETRIA", "CUSTO"]
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "periodo_referencia",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "metricas",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "dashboard_cache",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "atendente_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "tipo_dashboard",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["ATENDENTE", "GESTOR", "COMPARATIVO", "SATISFACAO"]
+        },
+        {
+          "name": "periodo_referencia",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "indicadores",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "pesquisas_satisfacao",
+      "type": "base",
+      "apiRules": {
+        "list": "",
+        "view": "",
+        "create": "@request.auth.id != ''",
+        "update": "",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "ficha_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "fichas_atendimento"
+        },
+        {
+          "name": "token",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "nota",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "comentario",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_envio",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_resposta",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "canal",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["EMAIL", "WHATSAPP"]
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["ENVIADO", "RESPONDIDO", "EXPIRADO"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX idx_pesquisas_token ON pesquisas_satisfacao (token)",
+        "CREATE INDEX idx_pesquisas_ficha ON pesquisas_satisfacao (ficha_id)",
+        "CREATE INDEX idx_pesquisas_status ON pesquisas_satisfacao (status)"
+      ]
+    },
+    {
+      "name": "logs_auditoria",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "usuario_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "acao",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "entidade",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "entidade_id",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "dados_sensiveis",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "detalhes",
+          "type": "json",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_logs_usuario ON logs_auditoria (usuario_id)",
+        "CREATE INDEX idx_logs_entidade ON logs_auditoria (entidade)"
+      ]
+    }
+  ]
+}
