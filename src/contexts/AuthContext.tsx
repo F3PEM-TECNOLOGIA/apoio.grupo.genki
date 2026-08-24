@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ATENDENTE: 'atendente@saude.com',
     }
     const email = map[targetPerfil]
-    await login(email, 'senha123')
+    await login(email, '12345678')
   }
 
   return (

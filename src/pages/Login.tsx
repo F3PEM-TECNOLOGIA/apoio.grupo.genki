@@ -44,7 +44,7 @@ export default function LoginPage() {
 
   const fillQuickLogin = (quickEmail: string) => {
     setEmail(quickEmail)
-    setPassword('senha123')
+    setPassword('12345678')
     setError(null)
   }
 
@@ -134,7 +134,7 @@ export default function LoginPage() {
             <div className="w-full flex items-center justify-between text-xs text-slate-500 font-medium">
               <span>Perfis de Demonstração:</span>
               <span className="text-[11px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                Senha padrão: senha123
+                Senha padrão: 12345678
               </span>
             </div>
 
