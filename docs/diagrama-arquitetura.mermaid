@@ -1,0 +1,80 @@
+graph TD
+    subgraph Usuarios["👤 USUÁRIOS"]
+        Gestor["Gestor<br/>(admin, acesso total)"]
+        RH["RH<br/>(filtro LGPD)"]
+        Atendente["Atendente<br/>(filtro LGPD parcial)"]
+        Beneficiario["Beneficiário<br/>(sem login, link público)"]
+    end
+
+    subgraph Frontend["🖥️ FRONTEND — Skip CDN"]
+        ReactApp["React 18 + Vite + TypeScript<br/>TailwindCSS + shadcn/ui"]
+        AuthCtx["AuthContext<br/>(JWT state)"]
+        RBAC["RBAC Guard<br/>(ProtectedRoute)"]
+        LGPFilter["LGPD Filter<br/>(applyLgpdFilter)"]
+        PBsdk["PocketBase Client SDK"]
+        ReactApp --> AuthCtx
+        ReactApp --> RBAC
+        ReactApp --> LGPFilter
+        ReactApp --> PBsdk
+    end
+
+    subgraph Backend["⚙️ BACKEND — Skip Cloud"]
+        PB["PocketBase"]
+        AuthAPI["Auth API<br/>collections/users/auth-with-password"]
+        RecAPI["Records API<br/>collections/beneficiarios, fichas_atendimento, ..."]
+        FileAPI["File API<br/>/api/files/"]
+        RTAPI["Realtime API<br/>(SSE)"]
+        Middleware["Middleware / Hooks"]
+        ColRules["Collection Rules<br/>(RBAC)"]
+        LGPBack["LGPD Filter<br/>(por perfil)"]
+        AuditLog["Audit Logger<br/>(logs_auditoria)"]
+        PB --> AuthAPI
+        PB --> RecAPI
+        PB --> FileAPI
+        PB --> RTAPI
+        PB --> Middleware
+        Middleware --> ColRules
+        Middleware --> LGPBack
+        Middleware --> AuditLog
+    end
+
+    subgraph DB["🗄️ BANCO DE DADOS"]
+        SQLite["SQLite<br/>(embutido no PocketBase)"]
+        Cols["20 Coleções:<br/>users, beneficiarios, fichas_atendimento,<br/>historico_fichas, lotes_selecao, planos_acao,<br/>controle_programas, pesquisas_satisfacao,<br/>apontamentos_rh, dashboard_cache, ..."]
+        Migs["5 Migrations aplicadas<br/>(0001 a 0005)"]
+        Seed["Seed Data:<br/>10 beneficiários, 2 lotes, 5 planos,<br/>3 programas, 5 fichas, 2 pesquisas"]
+        SQLite --> Cols
+        SQLite --> Migs
+        SQLite --> Seed
+    end
+
+    subgraph Secrets["🔐 SEGREDOS — Environment Variables"]
+        PBURL["PB_INSTANCE_URL"]
+        PBTOKEN["PB_SUPERUSER_TOKEN"]
+        SITE["SITE_URL"]
+        AIKEY["SKIP_AI_GATEWAY_API_KEY"]
+        AIURL["SKIP_AI_GATEWAY_URL"]
+    end
+
+    subgraph Infra["☁️ CONTAINER / INFRA"]
+        Build["Build Container<br/>(CI/CD)"]
+        Preview["Preview Deploy<br/>(--preview.goskip.app)"]
+        Prod["Production Deploy<br/>(.goskip.app)"]
+        Buckets["Buckets<br/>(PocketBase File Storage)<br/>users.avatar"]
+        Build --> Preview
+        Build --> Prod
+    end
+
+    Gestor --> Frontend
+    RH --> Frontend
+    Atendente --> Frontend
+    Beneficiario --> Frontend
+    PBsdk -->|"HTTPS (REST + SSE)"| AuthAPI
+    PBsdk --> RecAPI
+    PBsdk --> FileAPI
+    PBsdk --> RTAPI
+    RecAPI --> SQLite
+    FileAPI --> Buckets
+    PB --> Secrets
+    Frontend -.->|"serve via CDN"| Preview
+    Frontend -.->|"serve via CDN"| Prod
