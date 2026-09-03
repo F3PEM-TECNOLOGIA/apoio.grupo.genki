@@ -23,6 +23,7 @@ import GestorPlanosAcaoCrud from './pages/gestor/GestorPlanosAcao'
 import GestorProgramasCrud from './pages/gestor/GestorProgramas'
 import GestorComparativoPage from './pages/gestor/GestorComparativo'
 import GestorRelatoriosPage from './pages/gestor/GestorRelatorios'
+import GestorQuestionariosCrud from './pages/gestor/GestorQuestionarios'
 
 // Módulo do RH (GESTOR_RH)
 import RhDashboard from './pages/rh/RhDashboard'
@@ -94,6 +95,16 @@ const App = () => (
               <ProtectedRoute allowedRoles={['GESTOR_VENART']}>
                 <AppLayout>
                   <GestorUsuariosCrud />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gestor/questionarios"
+            element={
+              <ProtectedRoute allowedRoles={['GESTOR_VENART']}>
+                <AppLayout>
+                  <GestorQuestionariosCrud />
                 </AppLayout>
               </ProtectedRoute>
             }

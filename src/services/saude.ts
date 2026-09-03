@@ -695,14 +695,84 @@ export const PesquisasService = {
 
 // ================= QUESTIONÁRIOS CLÍNICOS SERVICE =================
 export const QuestionariosService = {
-  // Obter todos os templates ativos
-  async listTemplates(): Promise<QuestionarioTemplate[]> {
+  // Obter todos os templates (com opção de incluir inativos para gestão)
+  async getTemplates(apenasAtivos = true): Promise<QuestionarioTemplate[]> {
     const records = await pb.collection('questionarios_templates').getFullList({
-      filter: 'ativo = true',
+      filter: apenasAtivos ? 'ativo = true' : '',
       sort: 'condicao_principal',
       requestKey: null,
     })
     return records as unknown as QuestionarioTemplate[]
+  },
+
+  // Alias para retrocompatibilidade
+  async listTemplates(): Promise<QuestionarioTemplate[]> {
+    return this.getTemplates(true)
+  },
+
+  // Obter template por ID
+  async getTemplateById(id: string): Promise<QuestionarioTemplate> {
+    const record = await pb.collection('questionarios_templates').getOne(id, {
+      requestKey: null,
+    })
+    return record as unknown as QuestionarioTemplate
+  },
+
+  // Criar template de questionário
+  async createTemplate(data: Partial<QuestionarioTemplate>): Promise<QuestionarioTemplate> {
+    const record = await pb.collection('questionarios_templates').create(data)
+    return record as unknown as QuestionarioTemplate
+  },
+
+  // Atualizar template de questionário
+  async updateTemplate(
+    id: string,
+    data: Partial<QuestionarioTemplate>,
+  ): Promise<QuestionarioTemplate> {
+    const record = await pb.collection('questionarios_templates').update(id, data)
+    return record as unknown as QuestionarioTemplate
+  },
+
+  // Alternar status ativo/inativo do template
+  async toggleAtivoTemplate(id: string, ativo: boolean): Promise<QuestionarioTemplate> {
+    const record = await pb.collection('questionarios_templates').update(id, { ativo })
+    return record as unknown as QuestionarioTemplate
+  },
+
+  // Excluir template (verifica se possui respostas vinculadas antes para evitar violação de FK)
+  async deleteTemplate(
+    id: string,
+    softDeleteSeVinculado = true,
+  ): Promise<{ deleted: boolean; soft: boolean }> {
+    if (softDeleteSeVinculado) {
+      const respostas = await pb.collection('respostas_questionarios').getList(1, 1, {
+        filter: `template_id = "${id}"`,
+        requestKey: null,
+      })
+      if (respostas.totalItems > 0) {
+        // Se já tem respostas preenchidas vinculadas, faz soft delete para proteger integridade histórica
+        await pb.collection('questionarios_templates').update(id, { ativo: false })
+        return { deleted: true, soft: true }
+      }
+    }
+    await pb.collection('questionarios_templates').delete(id)
+    return { deleted: true, soft: false }
+  },
+
+  // Duplicar template existente
+  async duplicarTemplate(template: QuestionarioTemplate): Promise<QuestionarioTemplate> {
+    const payload = {
+      condicao_principal: template.condicao_principal,
+      titulo: `${template.titulo} (Cópia)`,
+      descricao: template.descricao ? `${template.descricao} (Cópia)` : '',
+      ativo: true,
+      questoes: template.questoes.map((q, idx) => ({
+        ...q,
+        id: `q_${Date.now()}_${idx + 1}`,
+      })),
+    }
+    const record = await pb.collection('questionarios_templates').create(payload)
+    return record as unknown as QuestionarioTemplate
   },
 
   // Obter template para a condição principal informada, com fallback genérico se não houver

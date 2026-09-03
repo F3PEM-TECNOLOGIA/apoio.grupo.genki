@@ -33,6 +33,7 @@ import {
   Sun,
   Moon,
   Shield,
+  ClipboardList,
 } from 'lucide-react'
 import { UserPerfil } from '@/types/saude'
 
@@ -48,13 +49,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = React.useState(false)
 
-  // Menus customizados para os 4 perfis do PRD v0.0.4
+  // Menus customizados para os perfis
   const gestorVenartNav: NavItem[] = [
     { label: 'Visão Geral (Venart)', href: '/gestor', icon: LayoutDashboard },
     { label: 'Importar Lotes', href: '/gestor/importar', icon: Upload },
     { label: 'Selecionar Elegíveis', href: '/gestor/selecionar', icon: CheckSquare },
     { label: 'Beneficiários (1.200 vidas)', href: '/gestor/beneficiarios', icon: Users },
     { label: 'Gestão de Usuários', href: '/gestor/usuarios', icon: UserCheck },
+    { label: 'Gestão de Questionários', href: '/gestor/questionarios', icon: ClipboardList },
     { label: 'Fichas de Cuidado', href: '/gestor/fichas', icon: FileText },
     { label: 'Planos de Ação', href: '/gestor/planos-acao', icon: Target },
     { label: 'Controle de Programas', href: '/gestor/programas', icon: Activity },
