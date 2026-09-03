@@ -4,7 +4,7 @@
 
 > **Status do Documento:** Aprovado / Versão Oficial  
 > **Versão do Produto:** v0.0.8  
-> **Data da Última Atualização:** Março de 2025  
+> **Data da Última Atualização:** Setembro de 2026  
 > **Autor / Time Responsável:** Squad de Engenharia e Saúde Corporativa Venart  
 > **Público-Alvo:** Gestores Venart, Médicos Gestores de Programa, Gestores de RH Corporativo, Operação Clínica e Equipe de Engenharia / Produto
 
