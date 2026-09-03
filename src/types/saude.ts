@@ -1,11 +1,24 @@
-export type UserPerfil = 'GESTOR_VENART' | 'GESTOR_PROGRAMA' | 'GESTOR_RH' | 'OPERACAO'
+export type UserPerfil =
+  | 'GESTOR_VENART'
+  | 'GESTOR_PROGRAMA'
+  | 'GESTOR_RH'
+  | 'OPERACAO'
+  | 'GESTOR'
+  | 'RH'
+  | 'ATENDENTE'
 
 export type TemaPreferido = 'LIGHT' | 'DARK'
 
 export type CategoriaProfissional = 'ENFERMEIRO' | 'MEDICO' | 'ADMINISTRATIVO'
 export type TipoProfissional = 'ENFERMEIRO' | 'MEDICO' | 'ADMINISTRATIVO'
 
-export type StatusBeneficiario = 'ELEGIVEL' | 'SELECIONADO' | 'APROVADO' | 'ATENDIDO' | 'INATIVO'
+export type StatusBeneficiario =
+  | 'ELEGIVEL'
+  | 'SELECIONADO'
+  | 'APROVADO'
+  | 'EM_ATENDIMENTO'
+  | 'ATENDIDO'
+  | 'INATIVO'
 
 export type TipoVinculo = 'TITULAR' | 'DEPENDENTE'
 export type NivelRisco = 'BAIXO' | 'MEDIO' | 'ALTO' | 'CRITICO'
@@ -231,4 +244,46 @@ export interface DashboardCache {
   periodo_referencia: string
   indicadores: Record<string, unknown>
   data_atualizacao?: string
+}
+
+export type TipoQuestaoClinica = 'sim_nao' | 'escala' | 'texto_livre' | 'multipla_escolha'
+
+export interface QuestaoClinica {
+  id: string
+  enunciado: string
+  tipo: TipoQuestaoClinica
+  obrigatoria?: boolean
+  opcoes?: string[] // Para multipla_escolha
+  escalaMin?: number // Para escala (ex: 0)
+  escalaMax?: number // Para escala (ex: 5)
+  legendaMin?: string
+  legendaMax?: string
+  placeholder?: string
+}
+
+export interface QuestionarioTemplate {
+  id: string
+  condicao_principal: string
+  titulo: string
+  descricao?: string
+  ativo: boolean
+  questoes: QuestaoClinica[]
+  created?: string
+  updated?: string
+}
+
+export interface RespostaQuestionario {
+  id: string
+  ficha_id: string
+  template_id: string
+  respostas: Record<string, any> // id_questao -> valor
+  preenchido_por?: string
+  data_preenchimento?: string
+  expand?: {
+    ficha_id?: FichaAtendimento
+    template_id?: QuestionarioTemplate
+    preenchido_por?: User
+  }
+  created?: string
+  updated?: string
 }

@@ -1,11 +1,22 @@
 import React, { useEffect, useState } from 'react'
-import { FichasService } from '@/services/saude'
-import { FichaAtendimento } from '@/types/saude'
+import { FichasService, QuestionariosService } from '@/services/saude'
+import { FichaAtendimento, QuestionarioTemplate, RespostaQuestionario } from '@/types/saude'
+import { useAuth } from '@/contexts/AuthContext'
+import { QuestionarioClinico } from '@/components/common/QuestionarioClinico'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RiscoBadge, StatusGeralBadge } from '@/components/common/Badges'
-import { Search, Star, MessageSquare, History, Phone, Mail, MessageCircle } from 'lucide-react'
+import {
+  Search,
+  Star,
+  MessageSquare,
+  History,
+  Phone,
+  Mail,
+  MessageCircle,
+  FileCheck,
+} from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -13,14 +24,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function GestorFichasCrud() {
+  const { user } = useAuth()
   const [fichas, setFichas] = useState<FichaAtendimento[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [selectedFicha, setSelectedFicha] = useState<FichaAtendimento | null>(null)
   const [historicoList, setHistoricoList] = useState<any[]>([])
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<QuestionarioTemplate | null>(null)
+  const [respostasList, setRespostasList] = useState<RespostaQuestionario[]>([])
 
   const loadData = async () => {
     setLoading(true)
@@ -39,10 +54,17 @@ export default function GestorFichasCrud() {
   const handleOpenHistorico = async (ficha: FichaAtendimento) => {
     setSelectedFicha(ficha)
     try {
-      const h = await FichasService.getHistorico(ficha.id)
+      const [h, resp, tpl] = await Promise.all([
+        FichasService.getHistorico(ficha.id),
+        QuestionariosService.getRespostasPorFicha(ficha.id),
+        QuestionariosService.getTemplatePorCondicao(ficha.condicao_principal),
+      ])
       setHistoricoList(h)
+      setRespostasList(resp)
+      setSelectedTemplate(tpl)
     } catch (e) {
       setHistoricoList([])
+      setRespostasList([])
     }
     setHistoryOpen(true)
   }
@@ -176,67 +198,103 @@ export default function GestorFichasCrud() {
         </CardContent>
       </Card>
 
-      {/* Modal Histórico e Auditoria */}
+      {/* Modal Histórico e Auditoria com Questionários */}
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Histórico de Versões & Auditoria Clínica</DialogTitle>
+            <DialogTitle>Auditoria Clínica da Ficha de Atendimento</DialogTitle>
             <DialogDescription className="text-xs">
-              {selectedFicha?.ficha_id} • Beneficiário:{' '}
-              {selectedFicha?.expand?.beneficiario_id?.nome_beneficiario}
+              {selectedFicha?.ficha_id} • Paciente:{' '}
+              {selectedFicha?.expand?.beneficiario_id?.nome_beneficiario || 'Beneficiário'} (
+              {selectedFicha?.condicao_principal})
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            <div className="bg-slate-50 p-3 rounded-lg border text-xs space-y-1">
-              <div className="font-semibold text-slate-800">
-                Detalhes Atuais (v{selectedFicha?.versao})
-              </div>
-              <p className="text-slate-600">
-                <strong>Descrição:</strong> {selectedFicha?.descricao_atendimento}
-              </p>
-              <p className="text-slate-600">
-                <strong>Meta / Plano:</strong> {selectedFicha?.meta || 'Não informada'}
-              </p>
-              <p className="text-slate-600">
-                <strong>Pendências:</strong> {selectedFicha?.pendencias || 'Nenhuma'}
-              </p>
-            </div>
+          <Tabs defaultValue="geral" className="space-y-3 pt-2">
+            <TabsList className="bg-slate-100 p-1">
+              <TabsTrigger value="geral" className="text-xs">
+                Visão Geral & Evolução
+              </TabsTrigger>
+              <TabsTrigger value="questionario" className="text-xs flex items-center gap-1.5">
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>Questionário Clínico ({respostasList.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="historico" className="text-xs">
+                Trilha de Modificações ({historicoList.length})
+              </TabsTrigger>
+            </TabsList>
 
-            <div className="border-t pt-3">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
-                Trilha de Modificações (historico_fichas)
-              </h4>
-
-              {historicoList.length === 0 ? (
-                <p className="text-xs text-slate-500 italic py-2">
-                  Nenhuma alteração anterior registrada para esta ficha (versão inicial).
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {historicoList.map((h, i) => (
-                    <div key={i} className="p-3 bg-white border rounded-lg text-xs space-y-1">
-                      <div className="flex items-center justify-between text-slate-500 text-[11px]">
-                        <span>{new Date(h.created).toLocaleString('pt-BR')}</span>
-                        <span className="font-semibold text-slate-700">
-                          {h.expand?.alterado_por?.name || 'Profissional'}
-                        </span>
-                      </div>
-                      <p className="font-medium text-teal-800">{h.campo_alterado}</p>
-                      <div className="grid grid-cols-2 gap-2 text-slate-600 bg-slate-50 p-2 rounded">
-                        <div>
-                          <strong>Antes:</strong> {h.valor_anterior}
-                        </div>
-                        <div>
-                          <strong>Depois:</strong> {h.valor_novo}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+            <TabsContent value="geral" className="space-y-4">
+              <div className="bg-slate-50 p-3 rounded-lg border text-xs space-y-2">
+                <div className="font-semibold text-slate-800 flex items-center justify-between">
+                  <span>Detalhes Atuais (v{selectedFicha?.versao})</span>
+                  {selectedFicha?.risco && <RiscoBadge risco={selectedFicha.risco} />}
                 </div>
+                <p className="text-slate-600">
+                  <strong>Descrição:</strong> {selectedFicha?.descricao_atendimento}
+                </p>
+                <p className="text-slate-600">
+                  <strong>Meta / Plano:</strong> {selectedFicha?.meta || 'Não informada'}
+                </p>
+                <p className="text-slate-600">
+                  <strong>Pendências:</strong> {selectedFicha?.pendencias || 'Nenhuma'}
+                </p>
+                <p className="text-slate-600">
+                  <strong>Responsável:</strong> {selectedFicha?.responsavel}
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="questionario" className="space-y-4">
+              {selectedFicha && (
+                <QuestionarioClinico
+                  fichaId={selectedFicha.id}
+                  condicaoPrincipal={selectedFicha.condicao_principal}
+                  template={selectedTemplate}
+                  respostasSalvas={respostasList}
+                  usuarioAtualId={user?.id}
+                  perfilUsuario={user?.perfil || 'GESTOR_VENART'}
+                  readOnly={true}
+                />
               )}
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="historico" className="space-y-3">
+              <div className="border-t pt-2">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
+                  Trilha de Modificações (historico_fichas)
+                </h4>
+
+                {historicoList.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic py-2">
+                    Nenhuma alteração anterior registrada para esta ficha (versão inicial).
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {historicoList.map((h, i) => (
+                      <div key={i} className="p-3 bg-white border rounded-lg text-xs space-y-1">
+                        <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                          <span>{new Date(h.created).toLocaleString('pt-BR')}</span>
+                          <span className="font-semibold text-slate-700">
+                            {h.expand?.alterado_por?.name || 'Profissional'}
+                          </span>
+                        </div>
+                        <p className="font-medium text-teal-800">{h.campo_alterado}</p>
+                        <div className="grid grid-cols-2 gap-2 text-slate-600 bg-slate-50 p-2 rounded">
+                          <div>
+                            <strong>Antes:</strong> {h.valor_anterior}
+                          </div>
+                          <div>
+                            <strong>Depois:</strong> {h.valor_novo}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

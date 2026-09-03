@@ -11,6 +11,8 @@ import {
   UserPerfil,
   ConfigLgpdCampo,
   CampoLgpd,
+  QuestionarioTemplate,
+  RespostaQuestionario,
 } from '@/types/saude'
 
 // Cache em memória para configurações dinâmicas de LGPD
@@ -18,7 +20,7 @@ let lgpdConfigCache: Record<string, boolean> | null = null
 let lgpdConfigPromise: Promise<Record<string, boolean>> | null = null
 
 // Regras padrão caso a coleção ainda esteja sendo carregada
-const defaultLgpdRules: Record<UserPerfil, Record<CampoLgpd, boolean>> = {
+const defaultLgpdRules: Record<string, Record<CampoLgpd, boolean>> = {
   GESTOR_PROGRAMA: {
     nome: true,
     condicao_principal: true,
@@ -41,6 +43,24 @@ const defaultLgpdRules: Record<UserPerfil, Record<CampoLgpd, boolean>> = {
     nome: false,
     condicao_principal: false,
     risco: false,
+    custo_12m: false,
+  },
+  GESTOR: {
+    nome: true,
+    condicao_principal: true,
+    risco: true,
+    custo_12m: true,
+  },
+  RH: {
+    nome: false,
+    condicao_principal: false,
+    risco: true,
+    custo_12m: false,
+  },
+  ATENDENTE: {
+    nome: true,
+    condicao_principal: true,
+    risco: true,
     custo_12m: false,
   },
 }
@@ -670,5 +690,145 @@ export const PesquisasService = {
       requestKey: null,
     })
     return records as unknown as PesquisaSatisfacao[]
+  },
+}
+
+// ================= QUESTIONÁRIOS CLÍNICOS SERVICE =================
+export const QuestionariosService = {
+  // Obter todos os templates ativos
+  async listTemplates(): Promise<QuestionarioTemplate[]> {
+    const records = await pb.collection('questionarios_templates').getFullList({
+      filter: 'ativo = true',
+      sort: 'condicao_principal',
+      requestKey: null,
+    })
+    return records as unknown as QuestionarioTemplate[]
+  },
+
+  // Obter template para a condição principal informada, com fallback genérico se não houver
+  async getTemplatePorCondicao(condicao?: string): Promise<QuestionarioTemplate> {
+    if (condicao && condicao.trim()) {
+      try {
+        const clean = condicao.trim().replace(/['"\\]/g, '')
+        const records = await pb.collection('questionarios_templates').getFullList({
+          filter: `ativo = true && condicao_principal ~ "${clean}"`,
+          requestKey: null,
+        })
+        if (records.length > 0) {
+          const exact = records.find(
+            (r) => r.condicao_principal.toLowerCase() === condicao.trim().toLowerCase(),
+          )
+          return (exact || records[0]) as unknown as QuestionarioTemplate
+        }
+      } catch (err) {
+        console.warn('Erro ao buscar template por condição:', err)
+      }
+    }
+
+    // Template genérico padrão para condições sem template específico
+    return {
+      id: 'template-generico',
+      condicao_principal: condicao || 'Geral',
+      titulo: `Questionário Clínico Geral — ${condicao || 'Acompanhamento de Saúde'}`,
+      descricao:
+        'Protocolo clínico geral de monitoramento de sintomas, adesão medicamentosa e hábitos de vida.',
+      ativo: true,
+      questoes: [
+        {
+          id: 'gen_1',
+          enunciado: 'Como o beneficiário avalia seu estado geral de saúde hoje?',
+          tipo: 'escala',
+          obrigatoria: true,
+          escalaMin: 0,
+          escalaMax: 5,
+          legendaMin: '0 = Muito Ruim',
+          legendaMax: '5 = Excelente',
+        },
+        {
+          id: 'gen_2',
+          enunciado:
+            'Apresentou novos sintomas ou queixas clínicas relevantes desde o último contato?',
+          tipo: 'sim_nao',
+          obrigatoria: true,
+        },
+        {
+          id: 'gen_3',
+          enunciado: 'Adesão ao plano terapêutico e medicações de uso contínuo prescritas:',
+          tipo: 'escala',
+          obrigatoria: true,
+          escalaMin: 0,
+          escalaMax: 5,
+          legendaMin: '0 = Não adere / Interrompeu',
+          legendaMax: '5 = Adesão integral 100%',
+        },
+        {
+          id: 'gen_4',
+          enunciado: 'Frequência de acompanhamento médico e exames de rotina nos últimos 6 meses:',
+          tipo: 'multipla_escolha',
+          obrigatoria: true,
+          opcoes: [
+            'Consultas e exames em dia',
+            'Consultas realizadas, aguardando exames',
+            'Atrasado / Sem consulta há mais de 6 meses',
+            'Não realiza acompanhamento regular',
+          ],
+        },
+        {
+          id: 'gen_5',
+          enunciado: 'Relato e observações clínicas detalhadas pelo profissional:',
+          tipo: 'texto_livre',
+          obrigatoria: true,
+          placeholder: 'Descreva a evolução clínica, condutas e orientações fornecidas...',
+        },
+      ],
+    }
+  },
+
+  // Obter respostas preenchidas de uma ficha
+  async getRespostasPorFicha(fichaId: string): Promise<RespostaQuestionario[]> {
+    const records = await pb.collection('respostas_questionarios').getFullList({
+      filter: `ficha_id = "${fichaId}"`,
+      sort: '-data_preenchimento,-created',
+      expand: 'template_id,preenchido_por',
+      requestKey: null,
+    })
+    return records as unknown as RespostaQuestionario[]
+  },
+
+  // Salvar respostas para uma ficha
+  async salvarRespostas(data: {
+    ficha_id: string
+    template_id: string
+    respostas: Record<string, any>
+    preenchido_por: string
+    data_preenchimento?: string
+  }): Promise<RespostaQuestionario> {
+    // Se o template for o genérico sem ID no banco, precisamos ou associar ao template mais próximo ou gravar
+    let templateIdToSave = data.template_id
+    if (templateIdToSave === 'template-generico') {
+      try {
+        const templates = await pb.collection('questionarios_templates').getFullList({
+          limit: 1,
+        })
+        if (templates.length > 0) {
+          templateIdToSave = templates[0].id
+        }
+      } catch {
+        /* intentionally ignored */
+      }
+    }
+
+    const payload = {
+      ficha_id: data.ficha_id,
+      template_id: templateIdToSave,
+      respostas: data.respostas,
+      preenchido_por: data.preenchido_por,
+      data_preenchimento: data.data_preenchimento || new Date().toISOString(),
+    }
+
+    const record = await pb.collection('respostas_questionarios').create(payload, {
+      expand: 'template_id,preenchido_por',
+    })
+    return record as unknown as RespostaQuestionario
   },
 }

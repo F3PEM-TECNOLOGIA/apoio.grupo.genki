@@ -1,4 +1,11 @@
-export type UserPerfil = 'GESTOR_VENART' | 'GESTOR_PROGRAMA' | 'GESTOR_RH' | 'OPERACAO'
+export type UserPerfil =
+  | 'GESTOR_VENART'
+  | 'GESTOR_PROGRAMA'
+  | 'GESTOR_RH'
+  | 'OPERACAO'
+  | 'GESTOR'
+  | 'RH'
+  | 'ATENDENTE'
 
 export type TemaPreferido = 'LIGHT' | 'DARK'
 export type CategoriaProfissional = 'ENFERMEIRO' | 'MEDICO' | 'ADMINISTRATIVO'
@@ -46,7 +53,13 @@ export interface LoteSelecao {
   }
 }
 
-export type StatusBeneficiario = 'ELEGIVEL' | 'SELECIONADO' | 'APROVADO' | 'ATENDIDO' | 'INATIVO'
+export type StatusBeneficiario =
+  | 'ELEGIVEL'
+  | 'SELECIONADO'
+  | 'APROVADO'
+  | 'EM_ATENDIMENTO'
+  | 'ATENDIDO'
+  | 'INATIVO'
 
 export type NivelRisco = 'BAIXO' | 'MEDIO' | 'ALTO' | 'CRITICO'
 export type TipoVinculo = 'TITULAR' | 'DEPENDENTE'

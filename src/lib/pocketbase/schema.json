@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-03T17:50:54.151Z",
+  "generatedAt": "2026-09-03T18:34:14.322Z",
   "collections": [
     {
       "name": "users",
@@ -1872,6 +1872,131 @@
       "indexes": [
         "CREATE INDEX idx_config_lgpd_perfil ON config_lgpd_campos (perfil)",
         "CREATE INDEX idx_config_lgpd_campo ON config_lgpd_campos (campo)"
+      ]
+    },
+    {
+      "name": "questionarios_templates",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "condicao_principal",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "titulo",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "descricao",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "ativo",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "questoes",
+          "type": "json",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_templates_condicao ON questionarios_templates (condicao_principal)",
+        "CREATE INDEX idx_templates_ativo ON questionarios_templates (ativo)"
+      ]
+    },
+    {
+      "name": "respostas_questionarios",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "ficha_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "fichas_atendimento"
+        },
+        {
+          "name": "template_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "questionarios_templates"
+        },
+        {
+          "name": "respostas",
+          "type": "json",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "preenchido_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "data_preenchimento",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_respostas_ficha ON respostas_questionarios (ficha_id)",
+        "CREATE INDEX idx_respostas_template ON respostas_questionarios (template_id)"
       ]
     }
   ]

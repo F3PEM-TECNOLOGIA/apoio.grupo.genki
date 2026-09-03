@@ -165,13 +165,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Alternar rapidamente entre as 5 contas demo (RN-07: senha 12345678)
   const switchMockProfile = async (targetPerfil: UserPerfil) => {
-    const map: Record<UserPerfil, string> = {
+    const map: Partial<Record<UserPerfil, string>> = {
       GESTOR_VENART: 'mateus.martins@venart.com.br',
       GESTOR_PROGRAMA: 'toshio.oba@venart.com.br',
       GESTOR_RH: 'raul.mazia@venart.com.br',
       OPERACAO: 'ketlin.nazario@venart.com.br',
+      GESTOR: 'mateus.martins@venart.com.br',
+      RH: 'raul.mazia@venart.com.br',
+      ATENDENTE: 'ketlin.nazario@venart.com.br',
     }
-    const email = map[targetPerfil]
+    const email = map[targetPerfil] || 'mateus.martins@venart.com.br'
     await login(email, '12345678')
   }
 

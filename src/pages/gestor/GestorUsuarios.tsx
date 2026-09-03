@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Search, Plus, Edit, UserCheck, Shield, Stethoscope } from 'lucide-react'
+import { Search, Plus, Edit, UserCheck, Shield, Stethoscope, Eye, EyeOff } from 'lucide-react'
 
 export default function GestorUsuariosCrud() {
   const [usuarios, setUsuarios] = useState<User[]>([])
@@ -38,11 +38,11 @@ export default function GestorUsuariosCrud() {
     tipo_profissional: 'ENFERMEIRO',
     categoria_profissional: 'ENFERMEIRO',
     registro_profissional: '',
-    unidade_regiao: 'São Paulo',
+    unidade_regiao: '',
     tema_preferido: 'LIGHT',
     ativo: true,
   })
-
+  const [showPassword, setShowPassword] = useState(false)
   const loadData = async () => {
     setLoading(true)
     try {
@@ -272,13 +272,24 @@ export default function GestorUsuariosCrud() {
               <Label className="text-xs font-semibold">
                 Senha {editingItem ? '(deixe em branco para não alterar)' : ''}
               </Label>
-              <Input
-                type="password"
-                value={formData.password || ''}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Mínimo 8 caracteres"
-                className="text-xs mt-1"
-              />
+              <div className="relative mt-1">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password || ''}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Mínimo 8 caracteres"
+                  className="text-xs pr-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-hidden"
+                  title={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+                  aria-label={showPassword ? 'Ocultar senha' : 'Exibir senha'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

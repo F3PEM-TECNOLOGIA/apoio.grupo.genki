@@ -6,6 +6,7 @@ import {
   BeneficiariosService,
   PlanosAcaoService,
   ControleProgramasService,
+  QuestionariosService,
 } from '@/services/saude'
 import {
   FichaAtendimento,
@@ -17,7 +18,10 @@ import {
   StatusGeralFicha,
   NivelRisco,
   HistoricoFicha,
+  QuestionarioTemplate,
+  RespostaQuestionario,
 } from '@/types/saude'
+import { QuestionarioClinico } from '@/components/common/QuestionarioClinico'
 import {
   Card,
   CardContent,
@@ -81,6 +85,11 @@ export default function AtendenteFichaDetalhesPage() {
   const [programas, setProgramas] = useState<ControlePrograma[]>([])
   const [historico, setHistorico] = useState<HistoricoFicha[]>([])
 
+  // Questionários Clínicos por Condição
+  const [allTemplates, setAllTemplates] = useState<QuestionarioTemplate[]>([])
+  const [currentTemplate, setCurrentTemplate] = useState<QuestionarioTemplate | null>(null)
+  const [respostasSalvas, setRespostasSalvas] = useState<RespostaQuestionario[]>([])
+
   // Modal de Alta e Envio de Pesquisa
   const [altaModalOpen, setAltaModalOpen] = useState(false)
   const [altaCanal, setAltaCanal] = useState<'WHATSAPP' | 'EMAIL'>('WHATSAPP')
@@ -117,18 +126,25 @@ export default function AtendenteFichaDetalhesPage() {
     async function loadData() {
       setLoading(true)
       try {
-        const [bRes, pRes, progRes] = await Promise.all([
+        const [bRes, pRes, progRes, tplList] = await Promise.all([
           BeneficiariosService.list({ perPage: 1200, perfil: 'OPERACAO' }),
           PlanosAcaoService.list('ativo = true'),
           ControleProgramasService.list(),
+          QuestionariosService.listTemplates(),
         ])
 
         setBeneficiarios(bRes.items)
         setPlanosAcao(pRes)
         setProgramas(progRes)
+        setAllTemplates(tplList)
 
         if (!isNew && id) {
-          const ficha = await FichasService.getById(id)
+          const [ficha, h, resp] = await Promise.all([
+            FichasService.getById(id),
+            FichasService.getHistorico(id),
+            QuestionariosService.getRespostasPorFicha(id),
+          ])
+
           setFormData({
             ...ficha,
             data_contato: ficha.data_contato ? ficha.data_contato.slice(0, 16) : '',
@@ -136,9 +152,14 @@ export default function AtendenteFichaDetalhesPage() {
               ? ficha.data_proximo_contato.slice(0, 10)
               : '',
           })
-
-          const h = await FichasService.getHistorico(id)
           setHistorico(h)
+          setRespostasSalvas(resp)
+
+          // Obter template para a condição da ficha
+          const condicao =
+            ficha.condicao_principal || ficha.expand?.beneficiario_id?.condicao_principal
+          const tpl = await QuestionariosService.getTemplatePorCondicao(condicao)
+          setCurrentTemplate(tpl)
         } else if (bRes.items.length > 0) {
           // Defaults for new
           const firstB = bRes.items[0]
@@ -148,6 +169,9 @@ export default function AtendenteFichaDetalhesPage() {
             condicao_principal: firstB.condicao_principal || '',
             risco: firstB.risco || 'MEDIO',
           }))
+
+          const tpl = await QuestionariosService.getTemplatePorCondicao(firstB.condicao_principal)
+          setCurrentTemplate(tpl)
         }
       } catch (err) {
         console.error('Erro ao carregar dados da ficha:', err)
@@ -159,14 +183,28 @@ export default function AtendenteFichaDetalhesPage() {
   }, [id, isNew])
 
   // Ao selecionar um beneficiário no cadastro de nova ficha
-  const handleBeneficiarioChange = (bId: string) => {
+  const handleBeneficiarioChange = async (bId: string) => {
     const b = beneficiarios.find((item) => item.id === bId)
+    const novaCondicao = b?.condicao_principal || ''
     setFormData((prev) => ({
       ...prev,
       beneficiario_id: bId,
-      condicao_principal: b?.condicao_principal || prev.condicao_principal,
+      condicao_principal: novaCondicao || prev.condicao_principal,
       risco: b?.risco || prev.risco,
     }))
+
+    if (novaCondicao) {
+      const tpl = await QuestionariosService.getTemplatePorCondicao(novaCondicao)
+      setCurrentTemplate(tpl)
+    }
+  }
+
+  // Recarregar respostas após submissão do questionário
+  const reloadRespostasQuestionarios = async () => {
+    if (id && !isNew) {
+      const resp = await QuestionariosService.getRespostasPorFicha(id)
+      setRespostasSalvas(resp)
+    }
   }
 
   // Ao selecionar um plano de ação do catálogo
@@ -351,15 +389,26 @@ export default function AtendenteFichaDetalhesPage() {
             <TabsTrigger value="dados_clinicos" className="text-xs">
               1. Dados do Contato & Avaliação
             </TabsTrigger>
+            <TabsTrigger value="questionario" className="text-xs flex items-center gap-1.5">
+              <span>2. Questionário Clínico</span>
+              {currentTemplate && (
+                <span className="text-[10px] bg-teal-100 text-teal-800 font-semibold px-1.5 py-0.2 rounded">
+                  {currentTemplate.condicao_principal}
+                </span>
+              )}
+              {respostasSalvas.length > 0 && (
+                <span className="w-2 h-2 rounded-full bg-teal-600 inline-block" />
+              )}
+            </TabsTrigger>
             <TabsTrigger value="plano_acao" className="text-xs">
-              2. Plano de Ação & Intervenção
+              3. Plano de Ação & Intervenção
             </TabsTrigger>
             <TabsTrigger value="indicadores" className="text-xs">
-              3. Indicadores & Fechamento
+              4. Indicadores & Fechamento
             </TabsTrigger>
             {!isNew && (
               <TabsTrigger value="historico" className="text-xs">
-                4. Histórico de Auditoria ({historico.length})
+                5. Histórico de Auditoria ({historico.length})
               </TabsTrigger>
             )}
           </TabsList>
@@ -501,6 +550,24 @@ export default function AtendenteFichaDetalhesPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Tab Questionário Clínico por Condição Principal */}
+          <TabsContent value="questionario" className="space-y-4">
+            <QuestionarioClinico
+              fichaId={id && !isNew ? id : undefined}
+              condicaoPrincipal={
+                formData.condicao_principal || selectedBeneficiario?.condicao_principal
+              }
+              template={currentTemplate}
+              allTemplates={allTemplates}
+              onSelectTemplate={(tpl) => setCurrentTemplate(tpl)}
+              respostasSalvas={respostasSalvas}
+              onRespostasSalvasUpdated={reloadRespostasQuestionarios}
+              usuarioAtualId={user?.id}
+              perfilUsuario={user?.perfil || 'OPERACAO'}
+              readOnly={false}
+            />
           </TabsContent>
 
           {/* Tab 2: Plano de Ação */}
