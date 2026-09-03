@@ -10,8 +10,8 @@ export function LgpdBadge({ perfil }: { perfil: UserPerfil | string }) {
         variant="outline"
         className="bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 flex items-center gap-1"
       >
-        <Shield className="w-3.5 h-3.5" />
-        Gestor Programa (Acesso Total / Sem Ocultação)
+        <ShieldCheck className="w-3.5 h-3.5" />
+        Gestor Programa (Nome Protegido / Dados Clínicos e Custo Ativos)
       </Badge>
     )
   }
@@ -23,7 +23,7 @@ export function LgpdBadge({ perfil }: { perfil: UserPerfil | string }) {
         className="bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800 flex items-center gap-1"
       >
         <ShieldCheck className="w-3.5 h-3.5" />
-        Gestor Venart (Nome Oculto / Dados Clínicos e Custo Ativos)
+        Gestor Venart (Nome Protegido / Dados Clínicos e Custo Ativos)
       </Badge>
     )
   }
@@ -34,8 +34,8 @@ export function LgpdBadge({ perfil }: { perfil: UserPerfil | string }) {
         variant="outline"
         className="bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 flex items-center gap-1"
       >
-        <ShieldAlert className="w-3.5 h-3.5" />
-        Gestor RH (Nome Oculto / Dados Clínicos e Custo Ativos)
+        <ShieldCheck className="w-3.5 h-3.5" />
+        Gestor RH (Nome Protegido / Dados Clínicos e Custo Ativos)
       </Badge>
     )
   }
@@ -44,10 +44,10 @@ export function LgpdBadge({ perfil }: { perfil: UserPerfil | string }) {
     return (
       <Badge
         variant="outline"
-        className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800 flex items-center gap-1"
+        className="bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border-teal-300 dark:border-teal-800 flex items-center gap-1"
       >
-        <ShieldAlert className="w-3.5 h-3.5" />
-        Operação (LGPD Restrito: Nome, Condição, Risco e Custo Ocultos)
+        <ShieldCheck className="w-3.5 h-3.5" />
+        Operação (Nome Protegido / Acesso Clínico Liberado)
       </Badge>
     )
   }

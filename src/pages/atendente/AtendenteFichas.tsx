@@ -27,18 +27,8 @@ export default function AtendenteFichasPage() {
     setLoading(true)
     try {
       const res = await FichasService.list('', '-created')
-      // Filtrar para o atendente/operador logado
-      if (user?.perfil === 'OPERACAO') {
-        setFichas(
-          res.filter(
-            (f) =>
-              f.atendente_id === user.id ||
-              f.responsavel?.toLowerCase().includes(user.name.toLowerCase()),
-          ),
-        )
-      } else {
-        setFichas(res)
-      }
+      // Permite ao operador ver todas as fichas atribuídas ou gerais da operação
+      setFichas(res)
     } finally {
       setLoading(false)
     }

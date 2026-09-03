@@ -85,6 +85,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const operacaoNav: NavItem[] = [
     { label: 'Painel da Operação', href: '/atendente', icon: LayoutDashboard },
     { label: 'Minhas Fichas de Cuidado', href: '/atendente/fichas', icon: FileText },
+    { label: 'Consultas & Evoluções Gerais', href: '/gestor/fichas', icon: ClipboardList },
   ]
 
   let navItems: NavItem[] = []

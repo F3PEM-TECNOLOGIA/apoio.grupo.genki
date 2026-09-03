@@ -112,7 +112,7 @@ const App = () => (
           <Route
             path="/gestor/fichas"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA', 'OPERACAO']}>
                 <AppLayout>
                   <GestorFichasCrud />
                 </AppLayout>

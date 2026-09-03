@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { FichasService, QuestionariosService } from '@/services/saude'
 import { FichaAtendimento, QuestionarioTemplate, RespostaQuestionario } from '@/types/saude'
 import { useAuth } from '@/contexts/AuthContext'
@@ -82,6 +83,7 @@ export default function GestorFichasCrud() {
       (f.expand?.beneficiario_id?.nome_beneficiario || '')
         .toLowerCase()
         .includes(search.toLowerCase()) ||
+      (f.expand?.beneficiario_id?.matricula || '').toLowerCase().includes(search.toLowerCase()) ||
       (f.expand?.atendente_id?.name || '').toLowerCase().includes(search.toLowerCase()) ||
       (f.condicao_principal || '').toLowerCase().includes(search.toLowerCase()),
   )
@@ -94,10 +96,15 @@ export default function GestorFichasCrud() {
             Fichas de Atendimento & Evolução Clínica
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Auditoria clínica de todos os atendimentos, histórico de versões e pesquisas de
+            Gestão clínica e auditoria de todos os atendimentos, histórico de versões e pesquisas de
             satisfação
           </p>
         </div>
+        <Link to="/atendente/fichas/nova">
+          <Button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold gap-1.5 text-xs">
+            + Nova Ficha / Consulta
+          </Button>
+        </Link>
       </div>
 
       <Card className="border-slate-200">
@@ -136,7 +143,10 @@ export default function GestorFichasCrud() {
                     </td>
                     <td className="p-3.5">
                       <div className="font-medium text-slate-900">
-                        {f.expand?.beneficiario_id?.nome_beneficiario || 'Beneficiário'}
+                        {f.expand?.beneficiario_id?.matricula
+                          ? `Beneficiário Protegido (${f.expand?.beneficiario_id?.matricula})`
+                          : f.expand?.beneficiario_id?.nome_beneficiario ||
+                            'Beneficiário Protegido'}
                       </div>
                       <div className="text-xs text-slate-500">
                         {f.expand?.beneficiario_id?.matricula || ''}
@@ -180,15 +190,26 @@ export default function GestorFichasCrud() {
                       )}
                     </td>
                     <td className="p-3.5 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenHistorico(f)}
-                        className="text-xs h-7 gap-1"
-                      >
-                        <History className="w-3.5 h-3.5" />
-                        Histórico
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link to={`/atendente/fichas/${f.id}`}>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="text-xs h-7 gap-1 bg-teal-600 hover:bg-teal-700 text-white"
+                          >
+                            Atender / Evoluir
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenHistorico(f)}
+                          className="text-xs h-7 gap-1"
+                        >
+                          <History className="w-3.5 h-3.5" />
+                          Auditoria
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -205,8 +226,11 @@ export default function GestorFichasCrud() {
             <DialogTitle>Auditoria Clínica da Ficha de Atendimento</DialogTitle>
             <DialogDescription className="text-xs">
               {selectedFicha?.ficha_id} • Paciente:{' '}
-              {selectedFicha?.expand?.beneficiario_id?.nome_beneficiario || 'Beneficiário'} (
-              {selectedFicha?.condicao_principal})
+              {selectedFicha?.expand?.beneficiario_id?.matricula
+                ? `Beneficiário Protegido (${selectedFicha?.expand?.beneficiario_id?.matricula})`
+                : selectedFicha?.expand?.beneficiario_id?.nome_beneficiario ||
+                  'Beneficiário Protegido'}{' '}
+              ({selectedFicha?.condicao_principal})
             </DialogDescription>
           </DialogHeader>
 

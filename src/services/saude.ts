@@ -22,7 +22,7 @@ let lgpdConfigPromise: Promise<Record<string, boolean>> | null = null
 // Regras padrão caso a coleção ainda esteja sendo carregada
 const defaultLgpdRules: Record<string, Record<CampoLgpd, boolean>> = {
   GESTOR_PROGRAMA: {
-    nome: true,
+    nome: false,
     condicao_principal: true,
     risco: true,
     custo_12m: true,
@@ -41,27 +41,27 @@ const defaultLgpdRules: Record<string, Record<CampoLgpd, boolean>> = {
   },
   OPERACAO: {
     nome: false,
-    condicao_principal: false,
-    risco: false,
-    custo_12m: false,
+    condicao_principal: true,
+    risco: true,
+    custo_12m: true,
   },
   GESTOR: {
-    nome: true,
+    nome: false,
     condicao_principal: true,
     risco: true,
     custo_12m: true,
   },
   RH: {
     nome: false,
-    condicao_principal: false,
-    risco: true,
-    custo_12m: false,
-  },
-  ATENDENTE: {
-    nome: true,
     condicao_principal: true,
     risco: true,
-    custo_12m: false,
+    custo_12m: true,
+  },
+  ATENDENTE: {
+    nome: false,
+    condicao_principal: true,
+    risco: true,
+    custo_12m: true,
   },
 }
 

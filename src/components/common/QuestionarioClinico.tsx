@@ -61,6 +61,7 @@ export function QuestionarioClinico({
   const [visualizandoHistoricoId, setVisualizandoHistoricoId] = useState<string | null>(null)
 
   // Verificação LGPD: se perfil for GESTOR_RH e condicao_principal não estiver visível (ou perfil sem acesso clínico)
+  // Perfis com atuação clínica e preenchimento de questionário: GESTOR_VENART, GESTOR_PROGRAMA, OPERACAO
   const temPermissaoClinica =
     perfilUsuario !== 'GESTOR_RH' && isCampoVisivel(perfilUsuario, 'condicao_principal')
 
