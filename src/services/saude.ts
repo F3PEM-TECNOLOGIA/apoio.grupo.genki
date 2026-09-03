@@ -356,25 +356,92 @@ export const UsuariosService = {
   },
 
   async create(data: Partial<User> & { password?: string }): Promise<User> {
-    const payload: any = {
-      ...data,
-      password: data.password || '12345678',
-      passwordConfirm: data.password || '12345678',
+    const rawPerfil = data.perfil || 'OPERACAO'
+    // Mapear perfis legados se existirem
+    let normalizedPerfil: UserPerfil = 'OPERACAO'
+    if (rawPerfil === 'GESTOR' || rawPerfil === 'GESTOR_VENART') normalizedPerfil = 'GESTOR_VENART'
+    else if (rawPerfil === 'GESTOR_PROGRAMA') normalizedPerfil = 'GESTOR_PROGRAMA'
+    else if (rawPerfil === 'RH' || rawPerfil === 'GESTOR_RH') normalizedPerfil = 'GESTOR_RH'
+    else normalizedPerfil = 'OPERACAO'
+
+    // categoria_profissional só aceita: ENFERMEIRO | MEDICO | ADMINISTRATIVO
+    const cat = data.categoria_profissional || (data.tipo_profissional as any) || 'ADMINISTRATIVO'
+    const normalizedCategoria = ['ENFERMEIRO', 'MEDICO', 'ADMINISTRATIVO'].includes(cat)
+      ? cat
+      : 'ADMINISTRATIVO'
+
+    // tipo_profissional só aceita: ENFERMEIRO | MEDICO (ou vazio)
+    const tipo = data.tipo_profissional
+    const normalizedTipo = tipo === 'ENFERMEIRO' || tipo === 'MEDICO' ? tipo : ''
+
+    const password =
+      data.password && data.password.trim().length >= 8 ? data.password.trim() : '12345678'
+
+    const payload: Record<string, any> = {
+      name: (data.name || '').trim(),
+      email: (data.email || '').trim().toLowerCase(),
+      password,
+      passwordConfirm: password,
       emailVisibility: true,
       verified: true,
-      tema_preferido: data.tema_preferido || 'LIGHT',
-      categoria_profissional: data.categoria_profissional || 'ADMINISTRATIVO',
+      perfil: normalizedPerfil,
+      tema_preferido: data.tema_preferido === 'DARK' ? 'DARK' : 'LIGHT',
+      categoria_profissional: normalizedCategoria,
+      registro_profissional: (data.registro_profissional || '').trim(),
+      unidade_regiao: (data.unidade_regiao || 'São Paulo').trim(),
+      ativo: data.ativo ?? true,
     }
+
+    if (normalizedTipo) {
+      payload.tipo_profissional = normalizedTipo
+    }
+
     const record = await pb.collection('users').create(payload)
     return record as unknown as User
   },
 
   async update(id: string, data: Partial<User> & { password?: string }): Promise<User> {
-    const payload: any = { ...data }
-    if (data.password) {
-      payload.password = data.password
-      payload.passwordConfirm = data.password
+    const payload: Record<string, any> = {}
+
+    if (data.name !== undefined) payload.name = data.name.trim()
+    if (data.email !== undefined) payload.email = data.email.trim().toLowerCase()
+    if (data.perfil !== undefined) {
+      const rawPerfil = data.perfil
+      if (rawPerfil === 'GESTOR' || rawPerfil === 'GESTOR_VENART') payload.perfil = 'GESTOR_VENART'
+      else if (rawPerfil === 'GESTOR_PROGRAMA') payload.perfil = 'GESTOR_PROGRAMA'
+      else if (rawPerfil === 'RH' || rawPerfil === 'GESTOR_RH') payload.perfil = 'GESTOR_RH'
+      else payload.perfil = 'OPERACAO'
     }
+    if (data.tema_preferido !== undefined) {
+      payload.tema_preferido = data.tema_preferido === 'DARK' ? 'DARK' : 'LIGHT'
+    }
+    if (data.categoria_profissional !== undefined) {
+      const cat = data.categoria_profissional
+      payload.categoria_profissional = ['ENFERMEIRO', 'MEDICO', 'ADMINISTRATIVO'].includes(cat)
+        ? cat
+        : 'ADMINISTRATIVO'
+    }
+    if (data.tipo_profissional !== undefined) {
+      payload.tipo_profissional =
+        data.tipo_profissional === 'ENFERMEIRO' || data.tipo_profissional === 'MEDICO'
+          ? data.tipo_profissional
+          : ''
+    }
+    if (data.registro_profissional !== undefined) {
+      payload.registro_profissional = data.registro_profissional.trim()
+    }
+    if (data.unidade_regiao !== undefined) {
+      payload.unidade_regiao = data.unidade_regiao.trim()
+    }
+    if (data.ativo !== undefined) {
+      payload.ativo = Boolean(data.ativo)
+    }
+
+    if (data.password && data.password.trim().length >= 8) {
+      payload.password = data.password.trim()
+      payload.passwordConfirm = data.password.trim()
+    }
+
     const record = await pb.collection('users').update(id, payload)
     return record as unknown as User
   },

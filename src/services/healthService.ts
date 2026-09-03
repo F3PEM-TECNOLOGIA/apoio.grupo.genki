@@ -50,11 +50,42 @@ export async function getAtendentes(): Promise<User[]> {
 }
 
 export async function createUsuario(data: Partial<User> & { password?: string }): Promise<User> {
-  const payload = {
-    ...data,
-    emailVisibility: false,
+  const rawPerfil = data.perfil || 'OPERACAO'
+  let normalizedPerfil: UserPerfil = 'OPERACAO'
+  if (rawPerfil === 'GESTOR' || rawPerfil === 'GESTOR_VENART') normalizedPerfil = 'GESTOR_VENART'
+  else if (rawPerfil === 'GESTOR_PROGRAMA') normalizedPerfil = 'GESTOR_PROGRAMA'
+  else if (rawPerfil === 'RH' || rawPerfil === 'GESTOR_RH') normalizedPerfil = 'GESTOR_RH'
+  else normalizedPerfil = 'OPERACAO'
+
+  const cat = data.categoria_profissional || (data.tipo_profissional as any) || 'ADMINISTRATIVO'
+  const normalizedCategoria = ['ENFERMEIRO', 'MEDICO', 'ADMINISTRATIVO'].includes(cat)
+    ? cat
+    : 'ADMINISTRATIVO'
+
+  const tipo = data.tipo_profissional
+  const normalizedTipo = tipo === 'ENFERMEIRO' || tipo === 'MEDICO' ? tipo : ''
+  const password =
+    data.password && data.password.trim().length >= 8 ? data.password.trim() : '12345678'
+
+  const payload: Record<string, any> = {
+    name: (data.name || '').trim(),
+    email: (data.email || '').trim().toLowerCase(),
+    password,
+    passwordConfirm: password,
+    emailVisibility: true,
     verified: true,
+    perfil: normalizedPerfil,
+    tema_preferido: data.tema_preferido === 'DARK' ? 'DARK' : 'LIGHT',
+    categoria_profissional: normalizedCategoria,
+    registro_profissional: (data.registro_profissional || '').trim(),
+    unidade_regiao: (data.unidade_regiao || 'São Paulo').trim(),
+    ativo: data.ativo ?? true,
   }
+
+  if (normalizedTipo) {
+    payload.tipo_profissional = normalizedTipo
+  }
+
   const res = await pb.collection('users').create<User>(payload)
   await logAcao('CRIAR_USUARIO', 'users', res.id, false, { nome: res.name, perfil: res.perfil })
   return res

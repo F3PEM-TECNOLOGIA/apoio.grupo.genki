@@ -80,7 +80,7 @@ export default function GestaoUsuarios() {
       name: '',
       email: '',
       password: 'senha' + Math.floor(100000 + Math.random() * 900000),
-      perfil: 'ATENDENTE',
+      perfil: 'OPERACAO',
       tipo_profissional: 'ENFERMEIRO',
       registro_profissional: '',
       unidade_regiao: 'São Paulo',
@@ -95,8 +95,8 @@ export default function GestaoUsuarios() {
       name: u.name,
       email: u.email,
       password: '',
-      perfil: (u.perfil || 'GESTOR') as UserPerfil,
-      tipo_profissional: (u.tipo_profissional || 'MEDICO') as TipoProfissional,
+      perfil: (u.perfil || 'OPERACAO') as UserPerfil,
+      tipo_profissional: (u.tipo_profissional || 'ENFERMEIRO') as TipoProfissional,
       registro_profissional: u.registro_profissional || '',
       unidade_regiao: u.unidade_regiao || 'São Paulo',
       ativo: u.ativo ?? true,
@@ -112,25 +112,38 @@ export default function GestaoUsuarios() {
         await updateUsuario(editingItem.id, {
           name: formData.name,
           perfil: formData.perfil,
-          tipo_profissional:
-            formData.perfil === 'ATENDENTE' ? formData.tipo_profissional : undefined,
+          tipo_profissional: formData.tipo_profissional,
           registro_profissional: formData.registro_profissional,
           unidade_regiao: formData.unidade_regiao,
           ativo: formData.ativo,
+          ...(formData.password ? { password: formData.password } : {}),
         })
         toast.success('Usuário atualizado com sucesso!')
       } else {
         await createUsuario({
           ...formData,
-          role: formData.perfil === 'GESTOR' ? 'gestor' : 'profissional_saude',
+          tema_preferido: 'LIGHT',
+          categoria_profissional:
+            formData.perfil === 'OPERACAO'
+              ? 'ENFERMEIRO'
+              : formData.perfil === 'GESTOR_PROGRAMA'
+                ? 'MEDICO'
+                : 'ADMINISTRATIVO',
         })
         toast.success(`Usuário ${formData.name} criado com sucesso!`)
       }
       setModalOpen(false)
       await loadData()
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      toast.error('Erro ao salvar usuário.')
+      const detail = err?.data?.data
+      let extra = ''
+      if (detail && typeof detail === 'object') {
+        extra = Object.entries(detail)
+          .map(([k, v]: [string, any]) => `${k}: ${v?.message || JSON.stringify(v)}`)
+          .join(', ')
+      }
+      toast.error(extra ? `Erro: ${extra}` : err?.message || 'Erro ao salvar usuário.')
     } finally {
       setSaving(false)
     }
@@ -351,7 +364,7 @@ export default function GestaoUsuarios() {
               )}
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold">Perfil de Visibilidade (LGPD)</Label>
+                <Label className="text-xs font-semibold">Perfil RBAC</Label>
                 <select
                   value={formData.perfil}
                   onChange={(e) =>
@@ -359,46 +372,44 @@ export default function GestaoUsuarios() {
                   }
                   className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs font-medium"
                 >
-                  <option value="GESTOR">GESTOR (Acesso Total Clínico & Financeiro)</option>
-                  <option value="RH">RH (Filtro LGPD Ativo - Sem Diagnóstico/Custos)</option>
-                  <option value="ATENDENTE">ATENDENTE (Filtro Parcial - Clínico Sem Custos)</option>
+                  <option value="GESTOR_VENART">GESTOR_VENART (Acesso Total & Governança)</option>
+                  <option value="GESTOR_PROGRAMA">GESTOR_PROGRAMA (Médico)</option>
+                  <option value="GESTOR_RH">GESTOR_RH (RH / Distribuição)</option>
+                  <option value="OPERACAO">OPERACAO (Atendente de Saúde)</option>
                 </select>
               </div>
 
-              {formData.perfil === 'ATENDENTE' && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold">Tipo de Profissional</Label>
-                      <select
-                        value={formData.tipo_profissional}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            tipo_profissional: e.target.value as TipoProfissional,
-                          })
-                        }
-                        className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
-                      >
-                        <option value="ENFERMEIRO">Enfermeiro(a)</option>
-                        <option value="MEDICO">Médico(a)</option>
-                      </select>
-                    </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Tipo de Profissional</Label>
+                  <select
+                    value={formData.tipo_profissional || 'ENFERMEIRO'}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        tipo_profissional: e.target.value as TipoProfissional,
+                      })
+                    }
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
+                  >
+                    <option value="ENFERMEIRO">Enfermeiro(a)</option>
+                    <option value="MEDICO">Médico(a)</option>
+                    <option value="ADMINISTRATIVO">Administrativo</option>
+                  </select>
+                </div>
 
-                    <div className="space-y-1">
-                      <Label className="text-xs font-semibold">Registro (CRM / COREN)</Label>
-                      <Input
-                        value={formData.registro_profissional}
-                        onChange={(e) =>
-                          setFormData({ ...formData, registro_profissional: e.target.value })
-                        }
-                        placeholder="Ex: CRM/SP 123456"
-                        className="text-xs font-mono"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Registro (CRM / COREN)</Label>
+                  <Input
+                    value={formData.registro_profissional}
+                    onChange={(e) =>
+                      setFormData({ ...formData, registro_profissional: e.target.value })
+                    }
+                    placeholder="Ex: CRM/SP 123456"
+                    className="text-xs font-mono"
+                  />
+                </div>
+              </div>
 
               <div className="space-y-1">
                 <Label className="text-xs font-semibold">Unidade / Polo Regional</Label>

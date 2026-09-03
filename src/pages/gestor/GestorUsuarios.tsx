@@ -43,6 +43,9 @@ export default function GestorUsuariosCrud() {
     ativo: true,
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [savingUser, setSavingUser] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   const loadData = async () => {
     setLoading(true)
     try {
@@ -59,6 +62,7 @@ export default function GestorUsuariosCrud() {
 
   const handleOpenCreate = () => {
     setEditingItem(null)
+    setErrorMessage(null)
     setFormData({
       name: '',
       email: '',
@@ -76,22 +80,25 @@ export default function GestorUsuariosCrud() {
 
   const handleOpenEdit = (u: User) => {
     setEditingItem(u)
+    setErrorMessage(null)
     setFormData({
       name: u.name,
       email: u.email,
       perfil: u.perfil || 'GESTOR_VENART',
-      tipo_profissional: u.tipo_profissional || 'ADMINISTRATIVO',
+      tipo_profissional: u.tipo_profissional || 'ENFERMEIRO',
       categoria_profissional: u.categoria_profissional || 'ADMINISTRATIVO',
-      registro_profissional: u.registro_profissional,
-      unidade_regiao: u.unidade_regiao,
+      registro_profissional: u.registro_profissional || '',
+      unidade_regiao: u.unidade_regiao || 'São Paulo',
       tema_preferido: u.tema_preferido || 'LIGHT',
-      ativo: u.ativo,
+      ativo: u.ativo ?? true,
     })
     setDialogOpen(true)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSavingUser(true)
+    setErrorMessage(null)
     try {
       if (editingItem) {
         await UsuariosService.update(editingItem.id, formData)
@@ -99,18 +106,32 @@ export default function GestorUsuariosCrud() {
         await UsuariosService.create(formData)
       }
       setDialogOpen(false)
-      loadData()
+      await loadData()
     } catch (err: any) {
-      alert('Erro ao salvar usuário: ' + err.message)
+      console.error('Erro ao gravar usuário:', err)
+      const detail = err?.data?.data
+      let extra = ''
+      if (detail && typeof detail === 'object') {
+        extra = Object.entries(detail)
+          .map(([k, v]: [string, any]) => `${k}: ${v?.message || JSON.stringify(v)}`)
+          .join(', ')
+      }
+      setErrorMessage(
+        extra
+          ? `Erro nos campos: ${extra}`
+          : err?.message || 'Falha ao salvar usuário no PocketBase.',
+      )
+    } finally {
+      setSavingUser(false)
     }
   }
 
   const handleToggleAtivo = async (u: User) => {
     try {
       await UsuariosService.toggleAtivo(u.id, !u.ativo)
-      loadData()
+      await loadData()
     } catch (err: any) {
-      alert('Erro ao alterar status: ' + err.message)
+      alert('Erro ao alterar status: ' + (err?.message || 'Falha ao alterar status'))
     }
   }
 
@@ -247,6 +268,11 @@ export default function GestorUsuariosCrud() {
           </DialogHeader>
 
           <form onSubmit={handleSave} className="space-y-4 py-2">
+            {errorMessage && (
+              <div className="p-3 text-xs rounded-md bg-rose-50 border border-rose-200 text-rose-800 font-medium">
+                {errorMessage}
+              </div>
+            )}
             <div>
               <Label className="text-xs font-semibold">Nome Completo</Label>
               <Input
@@ -297,26 +323,44 @@ export default function GestorUsuariosCrud() {
                 <Label className="text-xs font-semibold">Perfil RBAC</Label>
                 <Select
                   value={formData.perfil || 'OPERACAO'}
-                  onValueChange={(val) => setFormData({ ...formData, perfil: val as UserPerfil })}
+                  onValueChange={(val) => {
+                    const perfilVal = val as UserPerfil
+                    // Sugerir categoria padrão conforme o perfil
+                    let cat = formData.categoria_profissional || 'ADMINISTRATIVO'
+                    if (perfilVal === 'OPERACAO') cat = 'ENFERMEIRO'
+                    if (perfilVal === 'GESTOR_PROGRAMA') cat = 'MEDICO'
+                    setFormData({
+                      ...formData,
+                      perfil: perfilVal,
+                      categoria_profissional: cat as any,
+                    })
+                  }}
                 >
                   <SelectTrigger className="text-xs mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="GESTOR_VENART">GESTOR_VENART</SelectItem>
-                    <SelectItem value="GESTOR_PROGRAMA">GESTOR_PROGRAMA</SelectItem>
-                    <SelectItem value="GESTOR_RH">GESTOR_RH</SelectItem>
-                    <SelectItem value="OPERACAO">OPERACAO</SelectItem>
+                    <SelectItem value="GESTOR_VENART">GESTOR_VENART (Administrador)</SelectItem>
+                    <SelectItem value="GESTOR_PROGRAMA">GESTOR_PROGRAMA (Médico)</SelectItem>
+                    <SelectItem value="GESTOR_RH">GESTOR_RH (Recursos Humanos)</SelectItem>
+                    <SelectItem value="OPERACAO">OPERACAO (Atendente/Enfermeiro)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold">Tipo Profissional</Label>
+                <Label className="text-xs font-semibold">Categoria Profissional</Label>
                 <Select
-                  value={formData.tipo_profissional || 'ENFERMEIRO'}
+                  value={formData.categoria_profissional || 'ADMINISTRATIVO'}
                   onValueChange={(val) =>
-                    setFormData({ ...formData, tipo_profissional: val as TipoProfissional })
+                    setFormData({
+                      ...formData,
+                      categoria_profissional: val as any,
+                      tipo_profissional:
+                        val === 'ENFERMEIRO' || val === 'MEDICO'
+                          ? (val as TipoProfissional)
+                          : undefined,
+                    })
                   }
                 >
                   <SelectTrigger className="text-xs mt-1">
@@ -325,13 +369,35 @@ export default function GestorUsuariosCrud() {
                   <SelectContent>
                     <SelectItem value="ENFERMEIRO">Enfermeiro(a)</SelectItem>
                     <SelectItem value="MEDICO">Médico(a)</SelectItem>
-                    <SelectItem value="ADMINISTRATIVO">Administrativo</SelectItem>
+                    <SelectItem value="ADMINISTRATIVO">Administrativo / Gestão</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">Tipo Clínico (Se aplicável)</Label>
+                <Select
+                  value={formData.tipo_profissional || 'NENHUM'}
+                  onValueChange={(val) =>
+                    setFormData({
+                      ...formData,
+                      tipo_profissional: val === 'NENHUM' ? undefined : (val as TipoProfissional),
+                    })
+                  }
+                >
+                  <SelectTrigger className="text-xs mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NENHUM">Não aplicável (Geral)</SelectItem>
+                    <SelectItem value="ENFERMEIRO">Enfermeiro(a)</SelectItem>
+                    <SelectItem value="MEDICO">Médico(a)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
                 <Label className="text-xs font-semibold">Tema Preferido</Label>
                 <Select
@@ -396,9 +462,10 @@ export default function GestorUsuariosCrud() {
               </Button>
               <Button
                 type="submit"
+                disabled={savingUser}
                 className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold"
               >
-                Salvar Usuário
+                {savingUser ? 'Gravando...' : 'Salvar Usuário'}
               </Button>
             </DialogFooter>
           </form>
