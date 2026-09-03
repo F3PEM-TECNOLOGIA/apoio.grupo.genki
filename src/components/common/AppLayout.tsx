@@ -34,6 +34,7 @@ import {
   Moon,
   Shield,
   ClipboardList,
+  Download,
 } from 'lucide-react'
 import { UserPerfil } from '@/types/saude'
 
@@ -41,6 +42,7 @@ interface NavItem {
   label: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+  isExternalDownload?: boolean
 }
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -203,6 +205,21 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {navItems.map((item) => {
             const isActive = location.pathname === item.href
             const Icon = item.icon
+            if (item.isExternalDownload) {
+              return (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  download="PRD-Meu-Concierge-Saude-v0.0.8.md"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all text-teal-300 bg-teal-950/50 border border-teal-800/60 hover:bg-teal-900/60 hover:text-white"
+                  title="Baixar Documento de Requisitos de Produto (v0.0.8)"
+                >
+                  <Icon className="w-4 h-4 text-teal-400" />
+                  <span>{item.label}</span>
+                </a>
+              )
+            }
             return (
               <Link
                 key={item.href}
@@ -219,9 +236,29 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             )
           })}
+
+          {perfil === 'GESTOR_VENART' && (
+            <div className="pt-2">
+              <a
+                href="/PRD.md"
+                download="PRD-Meu-Concierge-Saude-v0.0.8.md"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-teal-300 bg-teal-950/40 border border-teal-800/80 hover:bg-teal-900/60 hover:text-teal-100 transition-colors shadow-2xs"
+                title="Download do PRD Atualizado (v0.0.8)"
+              >
+                <Download className="w-4 h-4 text-teal-400 shrink-0" />
+                <div className="flex flex-col leading-tight">
+                  <span>Baixar PRD (v0.0.8)</span>
+                  <span className="text-[10px] text-teal-400/80 font-normal">
+                    Requisitos de Produto
+                  </span>
+                </div>
+              </a>
+            </div>
+          )}
         </nav>
 
-        {/* Fast profile switcher (PRD v0.0.4: 4 perfis) */}
+        {/* Fast profile switcher (PRD v0.0.8: 4 perfis) */}
         <div className="p-3 border-t border-slate-800 bg-slate-950/60">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
@@ -340,6 +377,18 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <LayoutDashboard className="w-4 h-4 mr-2" />
                   Painel Principal
                 </DropdownMenuItem>
+                {perfil === 'GESTOR_VENART' && (
+                  <DropdownMenuItem asChild>
+                    <a
+                      href="/PRD.md"
+                      download="PRD-Meu-Concierge-Saude-v0.0.8.md"
+                      className="cursor-pointer text-teal-700 dark:text-teal-400 font-medium"
+                    >
+                      <Download className="w-4 h-4 mr-2 text-teal-600" />
+                      Baixar PRD (v0.0.8)
+                    </a>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={toggleTema}>
                   {tema === 'DARK' ? (
                     <Sun className="w-4 h-4 mr-2 text-amber-500" />

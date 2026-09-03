@@ -115,7 +115,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">Meu Concierge de Saúde</h1>
           <p className="text-sm text-slate-300">
-            Plataforma Corporativa de Gestão e Concierge Clínico (PRD v0.0.4)
+            Plataforma Corporativa de Gestão e Concierge Clínico (PRD v0.0.8)
           </p>
         </div>
 
@@ -202,7 +202,7 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col border-t bg-slate-50/70 dark:bg-slate-950/70 p-3.5 rounded-b-lg space-y-2.5">
             <div className="w-full flex items-center justify-between text-xs text-slate-500 font-medium">
               <span className="font-semibold text-slate-700 dark:text-slate-300">
-                5 Usuários Demo (PRD v0.0.4):
+                5 Usuários Demo (PRD v0.0.8):
               </span>
               <span className="text-[11px] text-teal-700 bg-teal-50 dark:bg-teal-950 dark:text-teal-300 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800">
                 Senha padrão: <strong>12345678</strong> (RN-07: sem troca obrigatória)

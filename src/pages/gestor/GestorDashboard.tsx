@@ -18,6 +18,8 @@ import {
   ShieldCheck,
   DollarSign,
   HeartPulse,
+  Download,
+  FileText,
 } from 'lucide-react'
 import {
   BarChart,
@@ -133,6 +135,18 @@ export default function GestorDashboard() {
               <CheckSquare className="w-4 h-4" /> Selecionar População
             </Button>
           </Link>
+          <a
+            href="/PRD.md"
+            download="PRD-Meu-Concierge-Saude-v0.0.8.md"
+            title="Download do Documento de Requisitos de Produto (v0.0.8)"
+          >
+            <Button
+              variant="outline"
+              className="gap-2 border-teal-600 text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950"
+            >
+              <Download className="w-4 h-4 text-teal-600" /> Baixar PRD (v0.0.8)
+            </Button>
+          </a>
         </div>
       </div>
 
@@ -219,10 +233,19 @@ export default function GestorDashboard() {
               </h3>
             </div>
           </div>
-          <div className="text-xs text-emerald-800 max-w-sm">
-            Visualização de métricas financeiras habilitada pelo papel{' '}
-            <strong>GESTOR_VENART / GESTOR_PROGRAMA</strong>. Perfis GESTOR_RH e OPERACAO possuem
-            máscara LGPD dinâmica conforme a coleção config_lgpd_campos.
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="text-xs text-emerald-800 max-w-sm">
+              Visualização de métricas financeiras habilitada pelo papel{' '}
+              <strong>GESTOR_VENART / GESTOR_PROGRAMA</strong>. Perfis GESTOR_RH e OPERACAO possuem
+              máscara LGPD dinâmica conforme a coleção config_lgpd_campos.
+            </div>
+            <a
+              href="/PRD.md"
+              download="PRD-Meu-Concierge-Saude-v0.0.8.md"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-2xs whitespace-nowrap"
+            >
+              <Download className="w-3.5 h-3.5" /> Baixar PRD.md
+            </a>
           </div>
         </div>
       </Card>
