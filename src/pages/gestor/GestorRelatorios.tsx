@@ -40,7 +40,7 @@ export default function GestorRelatoriosPage() {
     async function loadData() {
       try {
         const [bRes, fRes, pRes, lRes] = await Promise.all([
-          BeneficiariosService.list({ perPage: 200, perfil: 'GESTOR' }),
+          BeneficiariosService.list({ perPage: 1200, perfil: 'GESTOR_PROGRAMA' }),
           FichasService.list(),
           PesquisasService.listAll(),
           LotesService.list(),
@@ -68,7 +68,7 @@ export default function GestorRelatoriosPage() {
         Vinculo: b.tipo_vinculo,
         Risco: b.risco,
         Condicao: b.condicao_principal,
-        Custo12m: b.custo_12_meses,
+        Custo12m: b.custo_12m !== undefined ? b.custo_12m : b.custo_12_meses,
         Status: b.status,
       }))
     } else if (tipo === 'satisfacao') {
@@ -179,7 +179,9 @@ export default function GestorRelatoriosPage() {
                         <td className="p-3 text-slate-800 font-medium">{b.condicao_principal}</td>
                         <td className="p-3">{b.risco}</td>
                         <td className="p-3 font-mono font-semibold text-emerald-700">
-                          {(b.custo_12_meses || 0).toLocaleString('pt-BR', {
+                          {(
+                            (b.custo_12m !== undefined ? b.custo_12m : b.custo_12_meses) || 0
+                          ).toLocaleString('pt-BR', {
                             style: 'currency',
                             currency: 'BRL',
                           })}
@@ -281,7 +283,11 @@ export default function GestorRelatoriosPage() {
                   </span>
                   <p className="text-xl font-bold text-emerald-950">
                     {beneficiarios
-                      .reduce((a, c) => a + (c.custo_12_meses || 0), 0)
+                      .reduce(
+                        (a, c) =>
+                          a + ((c.custo_12m !== undefined ? c.custo_12m : c.custo_12_meses) || 0),
+                        0,
+                      )
                       .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </p>
                 </div>
@@ -299,7 +305,11 @@ export default function GestorRelatoriosPage() {
                   </span>
                   <p className="text-xl font-bold text-blue-950">
                     {(
-                      beneficiarios.reduce((a, c) => a + (c.custo_12_meses || 0), 0) * 0.18
+                      beneficiarios.reduce(
+                        (a, c) =>
+                          a + ((c.custo_12m !== undefined ? c.custo_12m : c.custo_12_meses) || 0),
+                        0,
+                      ) * 0.18
                     ).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}{' '}
                     <span className="text-xs text-blue-600 font-normal">(-18%)</span>
                   </p>

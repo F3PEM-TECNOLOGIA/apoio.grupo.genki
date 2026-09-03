@@ -1,11 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import pb from '@/lib/pocketbase/client'
-import { User, UserPerfil } from '@/types/saude'
+import { User, UserPerfil, TemaPreferido } from '@/types/saude'
 
 interface AuthContextType {
   user: User | null
   token: string | null
   perfil: UserPerfil | null
+  tema: TemaPreferido
+  setTema: (tema: TemaPreferido) => Promise<void>
+  toggleTema: () => Promise<void>
   isLoading: boolean
   login: (email: string, password: string) => Promise<User>
   logout: () => void
@@ -18,17 +21,50 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(pb.authStore.token)
+  const [tema, setTemaState] = useState<TemaPreferido>('LIGHT')
   const [isLoading, setIsLoading] = useState(true)
 
+  const applyThemeToDocument = (t: TemaPreferido) => {
+    const root = document.documentElement
+    if (t === 'DARK') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }
+
   const mapModelToUser = (model: any): User => {
+    // Normalizar perfis legados para os novos 4 perfis
+    let resolvedPerfil: UserPerfil = 'GESTOR_VENART'
+    if (
+      model.perfil === 'GESTOR_VENART' ||
+      model.perfil === 'GESTOR_PROGRAMA' ||
+      model.perfil === 'GESTOR_RH' ||
+      model.perfil === 'OPERACAO'
+    ) {
+      resolvedPerfil = model.perfil
+    } else if (model.perfil === 'GESTOR') {
+      resolvedPerfil = 'GESTOR_VENART'
+    } else if (model.perfil === 'RH') {
+      resolvedPerfil = 'GESTOR_RH'
+    } else if (model.perfil === 'ATENDENTE') {
+      resolvedPerfil = 'OPERACAO'
+    }
+
+    const resolvedTema: TemaPreferido = model.tema_preferido === 'DARK' ? 'DARK' : 'LIGHT'
+
     return {
       id: model.id,
       name: model.name || model.email || 'Usuário',
       email: model.email,
-      perfil: (model.perfil || (model.role === 'admin' ? 'GESTOR' : 'GESTOR')) as UserPerfil,
+      perfil: resolvedPerfil,
+      tema_preferido: resolvedTema,
+      categoria_profissional:
+        model.categoria_profissional || model.tipo_profissional || 'ADMINISTRATIVO',
+      tipo_profissional:
+        model.tipo_profissional || model.categoria_profissional || 'ADMINISTRATIVO',
       registro_profissional: model.registro_profissional,
-      tipo_profissional: model.tipo_profissional,
-      unidade_regiao: model.unidade_regiao,
+      unidade_regiao: model.unidade_regiao || model.unidade,
       ativo: model.ativo ?? true,
       created: model.created,
       updated: model.updated,
@@ -38,18 +74,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       if (pb.authStore.isValid && pb.authStore.model) {
-        // Refresh token if possible or fetch fresh user record
         const fresh = await pb.collection('users').getOne(pb.authStore.model.id)
         const mapped = mapModelToUser(fresh)
         setUser(mapped)
         setToken(pb.authStore.token)
+        const t = mapped.tema_preferido || 'LIGHT'
+        setTemaState(t)
+        applyThemeToDocument(t)
       } else {
         setUser(null)
         setToken(null)
+        setTemaState('LIGHT')
+        applyThemeToDocument('LIGHT')
       }
     } catch {
       setUser(null)
       setToken(null)
+      setTemaState('LIGHT')
+      applyThemeToDocument('LIGHT')
       pb.authStore.clear()
     } finally {
       setIsLoading(false)
@@ -60,9 +102,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsub = pb.authStore.onChange(() => {
       setToken(pb.authStore.token)
       if (pb.authStore.model) {
-        setUser(mapModelToUser(pb.authStore.model))
+        const mapped = mapModelToUser(pb.authStore.model)
+        setUser(mapped)
+        const t = mapped.tema_preferido || 'LIGHT'
+        setTemaState(t)
+        applyThemeToDocument(t)
       } else {
         setUser(null)
+        setTemaState('LIGHT')
+        applyThemeToDocument('LIGHT')
       }
     })
 
@@ -73,6 +121,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  const setTema = async (novoTema: TemaPreferido) => {
+    setTemaState(novoTema)
+    applyThemeToDocument(novoTema)
+    if (user?.id) {
+      try {
+        await pb.collection('users').update(user.id, { tema_preferido: novoTema })
+        setUser((prev) => (prev ? { ...prev, tema_preferido: novoTema } : prev))
+      } catch (err) {
+        console.warn('Erro ao persistir tema do usuário:', err)
+      }
+    }
+  }
+
+  const toggleTema = async () => {
+    const next = tema === 'DARK' ? 'LIGHT' : 'DARK'
+    await setTema(next)
+  }
+
   const login = async (email: string, pass: string): Promise<User> => {
     setIsLoading(true)
     try {
@@ -80,6 +146,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mapped = mapModelToUser(authData.record)
       setUser(mapped)
       setToken(authData.token)
+      const t = mapped.tema_preferido || 'LIGHT'
+      setTemaState(t)
+      applyThemeToDocument(t)
       return mapped
     } finally {
       setIsLoading(false)
@@ -90,14 +159,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     pb.authStore.clear()
     setUser(null)
     setToken(null)
+    setTemaState('LIGHT')
+    applyThemeToDocument('LIGHT')
   }
 
-  // Quick helper to switch during testing / demo between the seed accounts
+  // Alternar rapidamente entre as 5 contas demo (RN-07: senha 12345678)
   const switchMockProfile = async (targetPerfil: UserPerfil) => {
-    const map = {
-      GESTOR: 'gestor@saude.com',
-      RH: 'rh@saude.com',
-      ATENDENTE: 'atendente@saude.com',
+    const map: Record<UserPerfil, string> = {
+      GESTOR_VENART: 'mateus.martins@venart.com.br',
+      GESTOR_PROGRAMA: 'toshio.oba@venart.com.br',
+      GESTOR_RH: 'raul.mazia@venart.com.br',
+      OPERACAO: 'ketlin.nazario@venart.com.br',
     }
     const email = map[targetPerfil]
     await login(email, '12345678')
@@ -109,6 +181,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         token,
         perfil: user?.perfil || null,
+        tema,
+        setTema,
+        toggleTema,
         isLoading,
         login,
         logout,

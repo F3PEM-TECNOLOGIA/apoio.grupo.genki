@@ -43,10 +43,13 @@ export default function RhDistribuirPage() {
     setLoading(true)
     try {
       const [bRes, aRes] = await Promise.all([
-        BeneficiariosService.list({ perPage: 200, perfil: 'RH' }),
-        UsuariosService.listAtendentes(),
+        BeneficiariosService.list({ perPage: 1200, perfil: 'GESTOR_RH' }),
+        UsuariosService.listOperacao(),
       ])
-      setBeneficiarios(bRes.items.filter((b) => b.status === 'SELECIONADO'))
+      // Beneficiários aptos para alocação: APROVADO ou SELECIONADO
+      setBeneficiarios(
+        bRes.items.filter((b) => b.status === 'APROVADO' || b.status === 'SELECIONADO'),
+      )
       setAtendentes(aRes)
       if (aRes.length > 0) {
         setTargetAtendenteId(aRes[0].id)
@@ -61,10 +64,12 @@ export default function RhDistribuirPage() {
   }, [])
 
   const filtered = beneficiarios.filter((b) => {
+    const nomeVal = b.nome || b.nome_beneficiario || ''
+    const regiaoVal = b.unidade || b.unidade_regiao || ''
     const matchesSearch =
-      b.nome_beneficiario.toLowerCase().includes(search.toLowerCase()) ||
+      nomeVal.toLowerCase().includes(search.toLowerCase()) ||
       b.matricula.toLowerCase().includes(search.toLowerCase())
-    const matchesRegiao = regiaoFilter === 'ALL' || (b.unidade_regiao || '').includes(regiaoFilter)
+    const matchesRegiao = regiaoFilter === 'ALL' || regiaoVal.includes(regiaoFilter)
     return matchesSearch && matchesRegiao
   })
 
@@ -89,7 +94,7 @@ export default function RhDistribuirPage() {
       const atendenteObj = atendentes.find((a) => a.id === targetAtendenteId)
       await BeneficiariosService.distributeToAtendente(selectedIds, targetAtendenteId)
       setSuccessMsg(
-        `${selectedIds.length} beneficiário(s) distribuído(s) com sucesso para o atendente ${atendenteObj?.name}! O status mudou para EM_ATENDIMENTO.`,
+        `${selectedIds.length} beneficiário(s) distribuído(s) com sucesso para o atendente/operador ${atendenteObj?.name}!`,
       )
       setSelectedIds([])
       await loadData()
@@ -283,10 +288,18 @@ export default function RhDistribuirPage() {
                           />
                         </td>
                         <td className="p-3.5 font-mono text-xs font-medium">{b.matricula}</td>
-                        <td className="p-3.5 font-medium text-slate-900">{b.nome_beneficiario}</td>
-                        <td className="p-3.5 text-xs text-slate-600">{b.tipo_vinculo}</td>
-                        <td className="p-3.5 text-xs text-slate-600">{b.unidade_regiao}</td>
-                        <td className="p-3.5 text-xs text-slate-600">{b.faixa_etaria}</td>
+                        <td className="p-3.5 font-medium text-slate-900">
+                          {b.nome || b.nome_beneficiario}
+                        </td>
+                        <td className="p-3.5 text-xs text-slate-600">
+                          {b.vinculo || b.tipo_vinculo}
+                        </td>
+                        <td className="p-3.5 text-xs text-slate-600">
+                          {b.unidade || b.unidade_regiao}
+                        </td>
+                        <td className="p-3.5 text-xs text-slate-600">
+                          {b.faixa || b.faixa_etaria}
+                        </td>
                         <td className="p-3.5 font-mono text-xs text-slate-600">
                           {b.celular || b.telefone || '—'}
                         </td>

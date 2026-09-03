@@ -25,8 +25,8 @@ export default function RhDashboard() {
     async function loadData() {
       try {
         const [bRes, aRes] = await Promise.all([
-          BeneficiariosService.list({ perPage: 200, perfil: 'RH' }),
-          UsuariosService.listAtendentes(),
+          BeneficiariosService.list({ perPage: 1200, perfil: 'GESTOR_RH' }),
+          UsuariosService.listOperacao(),
         ])
         setBeneficiarios(bRes.items)
         setAtendentes(aRes)
@@ -37,10 +37,10 @@ export default function RhDashboard() {
     loadData()
   }, [])
 
-  const selecionados = beneficiarios.filter((b) => b.status === 'SELECIONADO')
-  const distribuidos = beneficiarios.filter(
-    (b) => b.status === 'EM_ATENDIMENTO' || b.status === 'ATENDIDO',
+  const selecionados = beneficiarios.filter(
+    (b) => b.status === 'SELECIONADO' || b.status === 'APROVADO',
   )
+  const distribuidos = beneficiarios.filter((b) => !!b.atendente_id || b.status === 'ATENDIDO')
   const pendentes = selecionados.filter((b) => !b.atendente_id)
 
   return (
@@ -200,9 +200,11 @@ export default function RhDashboard() {
                 {selecionados.map((b) => (
                   <tr key={b.id} className="hover:bg-slate-50 text-xs">
                     <td className="p-3.5 font-mono font-medium">{b.matricula}</td>
-                    <td className="p-3.5 font-medium text-slate-900">{b.nome_beneficiario}</td>
-                    <td className="p-3.5 text-slate-600">{b.unidade_regiao}</td>
-                    <td className="p-3.5 text-slate-600">{b.faixa_etaria}</td>
+                    <td className="p-3.5 font-medium text-slate-900">
+                      {b.nome || b.nome_beneficiario}
+                    </td>
+                    <td className="p-3.5 text-slate-600">{b.unidade || b.unidade_regiao}</td>
+                    <td className="p-3.5 text-slate-600">{b.faixa || b.faixa_etaria}</td>
                     <td className="p-3.5 text-slate-600 font-mono">
                       {b.celular || b.telefone || 'Não cadastrado'}
                     </td>

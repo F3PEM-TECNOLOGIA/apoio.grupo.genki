@@ -142,15 +142,20 @@ export default function GestorImportarPage() {
     setErrorMsg(null)
 
     try {
-      const loteId = `LOTE-${Date.now().toString().slice(-6)}`
-      const custoTotal = previewData.reduce((acc, curr) => acc + (curr.custo_12_meses || 0), 0)
+      const loteId = `LOTE-2026-${Date.now().toString().slice(-4)}`
+      const custoTotal = previewData.reduce(
+        (acc, curr) =>
+          acc + ((curr.custo_12m !== undefined ? curr.custo_12m : curr.custo_12_meses) || 0),
+        0,
+      )
 
       await LotesService.createWithBeneficiarios(
         {
-          lote_id: loteId,
-          total_beneficiarios: previewData.length,
+          codigo_lote: loteId,
+          tipo_lote: 'NOVO_REGISTRO',
+          total_registros: previewData.length,
           custo_total: custoTotal,
-          criado_por: user?.id || '',
+          usuario_importador_id: user?.id || '',
         },
         previewData,
       )

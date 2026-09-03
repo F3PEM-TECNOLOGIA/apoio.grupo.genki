@@ -1,77 +1,94 @@
-export type UserPerfil = 'GESTOR' | 'RH' | 'ATENDENTE'
-export type TipoProfissional = 'ENFERMEIRO' | 'MEDICO'
+export type UserPerfil = 'GESTOR_VENART' | 'GESTOR_PROGRAMA' | 'GESTOR_RH' | 'OPERACAO'
+
+export type TemaPreferido = 'LIGHT' | 'DARK'
+export type CategoriaProfissional = 'ENFERMEIRO' | 'MEDICO' | 'ADMINISTRATIVO'
+export type TipoProfissional = 'ENFERMEIRO' | 'MEDICO' | 'ADMINISTRATIVO'
 
 export interface User {
   id: string
   email: string
   name: string
   perfil?: UserPerfil
-  registro_profissional?: string
+  tema_preferido?: TemaPreferido
+  categoria_profissional?: CategoriaProfissional
   tipo_profissional?: TipoProfissional
+  registro_profissional?: string
   unidade_regiao?: string
   ativo?: boolean
   avatar?: string
   role?: string
-  created: string
-  updated: string
+  created?: string
+  updated?: string
 }
 
+export type TipoLote = 'NOVO_REGISTRO' | 'ATUALIZACAO'
 export type StatusLote = 'IMPORTADO' | 'PROCESSADO' | 'ERRO'
 
 export interface LoteSelecao {
   id: string
-  lote_id: string
-  data_selecao: string
-  status: StatusLote
-  total_beneficiarios: number
-  custo_total: number
+  codigo_lote?: string
+  lote_id?: string
+  tipo_lote?: TipoLote
+  data_importacao?: string
+  data_selecao?: string
+  usuario_importador_id?: string
+  status_processamento?: StatusLote
+  status?: StatusLote
+  total_registros?: number
+  total_beneficiarios?: number
+  custo_total?: number
   criado_por?: string
-  created: string
-  updated: string
+  created?: string
+  updated?: string
   expand?: {
     criado_por?: User
+    usuario_importador_id?: User
   }
 }
 
-export type StatusBeneficiario =
-  | 'ELEGIVEL'
-  | 'SELECIONADO'
-  | 'EM_ATENDIMENTO'
-  | 'ATENDIDO'
-  | 'INATIVO'
+export type StatusBeneficiario = 'ELEGIVEL' | 'SELECIONADO' | 'APROVADO' | 'ATENDIDO' | 'INATIVO'
+
 export type NivelRisco = 'BAIXO' | 'MEDIO' | 'ALTO' | 'CRITICO'
 export type TipoVinculo = 'TITULAR' | 'DEPENDENTE'
 
 export interface Beneficiario {
   id: string
   id_externo?: string
-  nome_beneficiario: string
+  nome?: string
+  nome_beneficiario?: string
   matricula: string
-  unidade_regiao: string
-  tipo_vinculo: TipoVinculo
-  titular_id?: string
-  faixa_etaria: string
-  telefone: string
-  celular: string
-  email: string
+  unidade?: string
+  unidade_regiao?: string
+  vinculo?: TipoVinculo
+  tipo_vinculo?: TipoVinculo
+  faixa?: string
+  faixa_etaria?: string
+  telefone?: string
+  celular?: string
+  email?: string
+  custo_12m?: number
   custo_12_meses?: number
-  data_selecao: string
+  data_selecao?: string
   lote_id?: string
   status: StatusBeneficiario
   condicao_principal?: string
   risco?: NivelRisco
-  permite_contato_whatsapp_sms: boolean
+  permite_contato_whatsapp_sms?: boolean
   selecionado_por?: string
   data_selecao_gestao?: string
+  aprovado_por?: string
+  data_aprovacao?: string
   atendente_id?: string
   data_distribuicao?: string
   ativo: boolean
-  created: string
-  updated: string
+  titular_id?: string
+  created?: string
+  updated?: string
   expand?: {
     titular_id?: Beneficiario
     lote_id?: LoteSelecao
     selecionado_por?: User
+    aprovado_por?: User
     atendente_id?: User
   }
 }
@@ -86,8 +103,8 @@ export interface PlanoAcao {
   prazo_acao_dias: number
   prioridade: PrioridadePlano
   ativo: boolean
-  created: string
-  updated: string
+  created?: string
+  updated?: string
 }
 
 export interface ControlePrograma {
@@ -98,8 +115,8 @@ export interface ControlePrograma {
   data_selecao: string
   responsavel: string
   ativo: boolean
-  created: string
-  updated: string
+  created?: string
+  updated?: string
   expand?: {
     beneficiario_id?: Beneficiario
   }
@@ -139,8 +156,8 @@ export interface FichaAtendimento {
   data_resposta_pesquisa?: string
   versao: number
   ativo: boolean
-  created: string
-  updated: string
+  created?: string
+  updated?: string
   expand?: {
     beneficiario_id?: Beneficiario
     atendente_id?: User
@@ -157,8 +174,8 @@ export interface HistoricoFicha {
   valor_anterior: string
   valor_novo: string
   alterado_por?: string
-  created: string
-  updated: string
+  created?: string
+  updated?: string
   expand?: {
     alterado_por?: User
   }
@@ -177,8 +194,8 @@ export interface PesquisaSatisfacao {
   data_resposta?: string
   canal: CanalPesquisa
   status: StatusPesquisa
-  created: string
-  updated: string
+  created?: string
+  updated?: string
   expand?: {
     ficha_id?: FichaAtendimento
   }
@@ -192,19 +209,38 @@ export interface LogAuditoria {
   entidade_id?: string
   dados_sensiveis: boolean
   detalhes?: Record<string, unknown>
-  created: string
-  updated: string
+  created?: string
+  updated?: string
   expand?: {
     usuario_id?: User
   }
 }
 
-// Definição das 9 etapas do fluxo
+export type CampoLgpd = 'nome' | 'condicao_principal' | 'risco' | 'custo_12m'
+
+export interface ConfigLgpdCampo {
+  id: string
+  perfil: UserPerfil
+  campo: CampoLgpd
+  visivel: boolean
+  atualizado_por?: string
+  atualizado_em?: string
+  created?: string
+  updated?: string
+}
+
+// Definição das 9 etapas do fluxo (PRD v0.0.4)
 export interface EtapaFluxoDef {
   etapa: number
   titulo: string
   descricao: string
-  responsavel: 'GESTOR' | 'RH' | 'ATENDENTE' | 'BENEFICIARIO' | 'SISTEMA'
+  responsavel:
+    | 'GESTOR_VENART'
+    | 'GESTOR_PROGRAMA'
+    | 'GESTOR_RH'
+    | 'OPERACAO'
+    | 'BENEFICIARIO'
+    | 'SISTEMA'
 }
 
 export const ETAPAS_FLUXO: EtapaFluxoDef[] = [
@@ -216,50 +252,50 @@ export const ETAPAS_FLUXO: EtapaFluxoDef[] = [
   },
   {
     etapa: 2,
-    titulo: 'Importação e Validação',
-    descricao: 'Gestor importa lote e seleciona elegíveis (acesso total)',
-    responsavel: 'GESTOR',
+    titulo: 'Importação do Lote',
+    descricao: 'Gestor Venart importa lote de novos registros ou atualizações',
+    responsavel: 'GESTOR_VENART',
   },
   {
     etapa: 3,
-    titulo: 'Recepção RH (LGPD)',
-    descricao: 'RH visualiza lista protegida por LGPD (sem dados clínicos/custo)',
-    responsavel: 'RH',
+    titulo: 'Seleção de Elegíveis',
+    descricao: 'Gestor Venart seleciona elegíveis prioritários para o ciclo',
+    responsavel: 'GESTOR_VENART',
   },
   {
     etapa: 4,
-    titulo: 'Distribuição Atendentes',
-    descricao: 'RH distribui beneficiários aos profissionais de saúde',
-    responsavel: 'RH',
+    titulo: 'Aprovação Clínica',
+    descricao: 'Gestor do Programa valida e aprova clinicamente a inclusão',
+    responsavel: 'GESTOR_PROGRAMA',
   },
   {
     etapa: 5,
-    titulo: 'Atendimento Clínico',
-    descricao: 'Atendente realiza contato (LGPD parcial sem custos)',
-    responsavel: 'ATENDENTE',
+    titulo: 'Distribuição Operacional',
+    descricao: 'Gestor RH distribui os aprovados para a equipe de operação',
+    responsavel: 'GESTOR_RH',
   },
   {
     etapa: 6,
-    titulo: 'Plano de Ação / Alta',
-    descricao: 'Atribuição de plano de cuidado individualizado ou alta clínica',
-    responsavel: 'ATENDENTE',
+    titulo: 'Atendimento Operacional',
+    descricao: 'Operação executa contato e acompanha metas de saúde',
+    responsavel: 'OPERACAO',
   },
   {
     etapa: 7,
-    titulo: 'Indicadores e Registro',
-    descricao: 'Preenchimento de evolução, pendências e desfecho',
-    responsavel: 'ATENDENTE',
+    titulo: 'Plano de Ação e Alta',
+    descricao: 'Atribuição de plano de cuidado individualizado e alta médica',
+    responsavel: 'OPERACAO',
   },
   {
     etapa: 8,
-    titulo: 'Pesquisa Satisfação',
+    titulo: 'Pesquisa de Satisfação',
     descricao: 'Envio de link público de avaliação ao beneficiário',
     responsavel: 'BENEFICIARIO',
   },
   {
     etapa: 9,
-    titulo: 'Analytics & Dashboards',
-    descricao: 'Gestor analisa resultados clínicos, custos e satisfação',
-    responsavel: 'GESTOR',
+    titulo: 'Analytics & Governança',
+    descricao: 'Visualização consolidada de indicadores e conformidade LGPD',
+    responsavel: 'GESTOR_VENART',
   },
 ]

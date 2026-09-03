@@ -43,7 +43,10 @@ export default function GestorSelecionarPage() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const res = await BeneficiariosService.list({ perPage: 150, perfil: 'GESTOR' })
+      const res = await BeneficiariosService.list({
+        perPage: 1200,
+        perfil: user?.perfil || 'GESTOR_PROGRAMA',
+      })
       setBeneficiarios(res.items)
     } catch (err) {
       console.error('Erro ao carregar beneficiários:', err)
@@ -57,13 +60,15 @@ export default function GestorSelecionarPage() {
   }, [])
 
   const filtered = beneficiarios.filter((b) => {
+    const nomeVal = b.nome || b.nome_beneficiario || ''
+    const regiaoVal = b.unidade || b.unidade_regiao || ''
     const matchesSearch =
-      b.nome_beneficiario.toLowerCase().includes(search.toLowerCase()) ||
+      nomeVal.toLowerCase().includes(search.toLowerCase()) ||
       b.matricula.toLowerCase().includes(search.toLowerCase()) ||
       (b.condicao_principal || '').toLowerCase().includes(search.toLowerCase())
 
     const matchesRisco = riscoFilter === 'ALL' || b.risco === riscoFilter
-    const matchesRegiao = regiaoFilter === 'ALL' || (b.unidade_regiao || '').includes(regiaoFilter)
+    const matchesRegiao = regiaoFilter === 'ALL' || regiaoVal.includes(regiaoFilter)
     const matchesStatus = statusFilter === 'ALL' || b.status === statusFilter
 
     return matchesSearch && matchesRisco && matchesRegiao && matchesStatus
@@ -87,14 +92,39 @@ export default function GestorSelecionarPage() {
     if (selectedIds.length === 0 || !user) return
     setSubmitting(true)
     try {
-      await BeneficiariosService.selectForProgram(selectedIds, user.id)
+      // Se for GESTOR_PROGRAMA, aprova direto para o ciclo clínico
+      if (user.perfil === 'GESTOR_PROGRAMA') {
+        await BeneficiariosService.approveForProgram(selectedIds, user.id)
+        setSuccessMsg(
+          `${selectedIds.length} beneficiário(s) aprovado(s) clinicamente com sucesso! Status: APROVADO. Pronto para distribuição pela governança de RH.`,
+        )
+      } else {
+        await BeneficiariosService.selectForProgram(selectedIds, user.id)
+        setSuccessMsg(
+          `${selectedIds.length} beneficiário(s) selecionado(s) para o Programa com sucesso! Status: SELECIONADO (Aguardando Aprovação Clínica).`,
+        )
+      }
+      setSelectedIds([])
+      await loadData()
+    } catch (err) {
+      alert('Erro ao selecionar/aprovar beneficiários.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleApproveSelected = async () => {
+    if (selectedIds.length === 0 || !user) return
+    setSubmitting(true)
+    try {
+      await BeneficiariosService.approveForProgram(selectedIds, user.id)
       setSuccessMsg(
-        `${selectedIds.length} beneficiário(s) selecionado(s) para o Programa com sucesso! O status mudou para SELECIONADO e agora está pronto para distribuição pelo RH.`,
+        `${selectedIds.length} beneficiário(s) aprovado(s) clinicamente com sucesso! Status atualizado para APROVADO.`,
       )
       setSelectedIds([])
       await loadData()
     } catch (err) {
-      alert('Erro ao selecionar beneficiários.')
+      alert('Erro ao aprovar beneficiários clinicamente.')
     } finally {
       setSubmitting(false)
     }
@@ -152,8 +182,8 @@ export default function GestorSelecionarPage() {
               <SelectContent>
                 <SelectItem value="ALL">Todos os Status</SelectItem>
                 <SelectItem value="ELEGIVEL">Elegíveis (Não Selecionados)</SelectItem>
-                <SelectItem value="SELECIONADO">Já Selecionados</SelectItem>
-                <SelectItem value="EM_ATENDIMENTO">Em Atendimento</SelectItem>
+                <SelectItem value="SELECIONADO">Selecionados</SelectItem>
+                <SelectItem value="APROVADO">Aprovados</SelectItem>
                 <SelectItem value="ATENDIDO">Atendidos (Alta)</SelectItem>
               </SelectContent>
             </Select>
@@ -207,14 +237,26 @@ export default function GestorSelecionarPage() {
           </span>
         </div>
 
-        <Button
-          onClick={handleSelectForProgram}
-          disabled={selectedIds.length === 0 || submitting}
-          className="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs h-9"
-        >
-          <CheckSquare className="w-4 h-4 mr-1.5" />
-          {submitting ? 'Gravando seleção...' : 'Selecionar para o Programa'}
-        </Button>
+        <div className="flex items-center gap-2">
+          {user?.perfil === 'GESTOR_PROGRAMA' && (
+            <Button
+              onClick={handleApproveSelected}
+              disabled={selectedIds.length === 0 || submitting}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              {submitting ? 'Aprovando...' : 'Aprovar Clinicamente (GESTOR_PROGRAMA)'}
+            </Button>
+          )}
+          <Button
+            onClick={handleSelectForProgram}
+            disabled={selectedIds.length === 0 || submitting}
+            className="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs h-9"
+          >
+            <CheckSquare className="w-4 h-4 mr-1.5" />
+            {submitting ? 'Gravando...' : 'Selecionar para o Ciclo'}
+          </Button>
+        </div>
       </div>
 
       {/* Tabela de Seleção */}
@@ -253,18 +295,26 @@ export default function GestorSelecionarPage() {
                       <td className="p-3.5 font-mono text-xs font-medium text-slate-700">
                         {b.matricula}
                       </td>
-                      <td className="p-3.5 font-medium text-slate-900">{b.nome_beneficiario}</td>
-                      <td className="p-3.5 text-xs text-slate-600">{b.tipo_vinculo}</td>
-                      <td className="p-3.5 text-xs text-slate-600">{b.unidade_regiao}</td>
-                      <td className="p-3.5 text-xs text-slate-600">{b.faixa_etaria}</td>
+                      <td className="p-3.5 font-medium text-slate-900">
+                        {b.nome || b.nome_beneficiario}
+                      </td>
+                      <td className="p-3.5 text-xs text-slate-600">
+                        {b.vinculo || b.tipo_vinculo}
+                      </td>
+                      <td className="p-3.5 text-xs text-slate-600">
+                        {b.unidade || b.unidade_regiao}
+                      </td>
+                      <td className="p-3.5 text-xs text-slate-600">{b.faixa || b.faixa_etaria}</td>
                       <td className="p-3.5 text-xs font-medium text-slate-800 max-w-xs">
-                        {b.condicao_principal}
+                        {b.condicao_principal || '—'}
                       </td>
                       <td className="p-3.5">
                         <RiscoBadge risco={b.risco} />
                       </td>
                       <td className="p-3.5 font-mono text-xs font-semibold text-emerald-700">
-                        {(b.custo_12_meses || 0).toLocaleString('pt-BR', {
+                        {(
+                          (b.custo_12m !== undefined ? b.custo_12m : b.custo_12_meses) || 0
+                        ).toLocaleString('pt-BR', {
                           style: 'currency',
                           currency: 'BRL',
                         })}

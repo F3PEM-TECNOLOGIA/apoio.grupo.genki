@@ -44,7 +44,7 @@ export default function GestorDashboard() {
     async function loadData() {
       try {
         const [bRes, fRes, pRes] = await Promise.all([
-          BeneficiariosService.list({ perPage: 200, perfil: 'GESTOR' }),
+          BeneficiariosService.list({ perPage: 1200, perfil: 'GESTOR_PROGRAMA' }),
           FichasService.list(),
           PesquisasService.listAll(),
         ])
@@ -62,10 +62,16 @@ export default function GestorDashboard() {
 
   // Métricas calculadas
   const totalBeneficiarios = beneficiarios.length
-  const emAtendimento = beneficiarios.filter((b) => b.status === 'EM_ATENDIMENTO').length
+  const emAtendimento = beneficiarios.filter(
+    (b) => b.status === 'APROVADO' || b.status === 'EM_ATENDIMENTO',
+  ).length
   const atendidosAlta = beneficiarios.filter((b) => b.status === 'ATENDIDO').length
   const selecionados = beneficiarios.filter((b) => b.status === 'SELECIONADO').length
-  const custoTotal = beneficiarios.reduce((acc, curr) => acc + (curr.custo_12_meses || 0), 0)
+  const custoTotal = beneficiarios.reduce(
+    (acc, curr) =>
+      acc + ((curr.custo_12m !== undefined ? curr.custo_12m : curr.custo_12_meses) || 0),
+    0,
+  )
 
   // Média de satisfação
   const pesquisasComNota = pesquisas.filter((p) => p.status === 'RESPONDIDO' && p.nota > 0)
@@ -100,7 +106,7 @@ export default function GestorDashboard() {
   const statusData = [
     { name: 'Elegível', value: statusCount.ELEGIVEL || 0 },
     { name: 'Selecionado', value: statusCount.SELECIONADO || 0 },
-    { name: 'Em Atendimento', value: statusCount.EM_ATENDIMENTO || 0 },
+    { name: 'Aprovado', value: (statusCount.APROVADO || 0) + (statusCount.EM_ATENDIMENTO || 0) },
     { name: 'Atendido (Alta)', value: statusCount.ATENDIDO || 0 },
   ]
 
@@ -214,8 +220,9 @@ export default function GestorDashboard() {
             </div>
           </div>
           <div className="text-xs text-emerald-800 max-w-sm">
-            Visualização de métricas financeiras habilitada pelo papel <strong>GESTOR</strong>.
-            Perfis RH e Atendente possuem máscara LGPD ativa neste campo.
+            Visualização de métricas financeiras habilitada pelo papel{' '}
+            <strong>GESTOR_VENART / GESTOR_PROGRAMA</strong>. Perfis GESTOR_RH e OPERACAO possuem
+            máscara LGPD dinâmica conforme a coleção config_lgpd_campos.
           </div>
         </div>
       </Card>
@@ -348,8 +355,10 @@ export default function GestorDashboard() {
                 {beneficiarios.slice(0, 8).map((b) => (
                   <tr key={b.id} className="hover:bg-slate-50">
                     <td className="p-3 font-mono text-xs text-slate-600">{b.matricula}</td>
-                    <td className="p-3 font-medium text-slate-900">{b.nome_beneficiario}</td>
-                    <td className="p-3 text-xs text-slate-600">{b.unidade_regiao}</td>
+                    <td className="p-3 font-medium text-slate-900">
+                      {b.nome || b.nome_beneficiario}
+                    </td>
+                    <td className="p-3 text-xs text-slate-600">{b.unidade || b.unidade_regiao}</td>
                     <td className="p-3 text-xs text-slate-800 max-w-xs truncate font-medium">
                       {b.condicao_principal || '—'}
                     </td>
@@ -357,7 +366,9 @@ export default function GestorDashboard() {
                       <RiscoBadge risco={b.risco} />
                     </td>
                     <td className="p-3 font-mono text-xs font-semibold text-emerald-700">
-                      {(b.custo_12_meses || 0).toLocaleString('pt-BR', {
+                      {(
+                        (b.custo_12m !== undefined ? b.custo_12m : b.custo_12_meses) || 0
+                      ).toLocaleString('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',
                       })}

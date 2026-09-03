@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T18:35:01.192Z",
+  "generatedAt": "2026-09-03T17:50:54.151Z",
   "collections": [
     {
       "name": "users",
@@ -55,9 +55,9 @@
         {
           "name": "perfil",
           "type": "select",
-          "required": false,
+          "required": true,
           "system": false,
-          "selectValues": ["GESTOR", "RH", "ATENDENTE"]
+          "selectValues": ["GESTOR_VENART", "GESTOR_PROGRAMA", "GESTOR_RH", "OPERACAO"]
         },
         {
           "name": "registro_profissional",
@@ -83,6 +83,20 @@
           "type": "bool",
           "required": false,
           "system": false
+        },
+        {
+          "name": "tema_preferido",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["LIGHT", "DARK"]
+        },
+        {
+          "name": "categoria_profissional",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["ENFERMEIRO", "MEDICO", "ADMINISTRATIVO"]
         }
       ],
       "indexes": [
@@ -872,11 +886,51 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "codigo_lote",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "tipo_lote",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["NOVO_REGISTRO", "ATUALIZACAO"]
+        },
+        {
+          "name": "data_importacao",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "usuario_importador_id",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "total_registros",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status_processamento",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["IMPORTADO", "PROCESSADO", "ERRO"]
         }
       ],
       "indexes": [
         "CREATE INDEX idx_lotes_lote_id ON lotes_selecao (lote_id)",
-        "CREATE INDEX idx_lotes_status ON lotes_selecao (status)"
+        "CREATE INDEX idx_lotes_status ON lotes_selecao (status)",
+        "CREATE UNIQUE INDEX `idx_lotes_codigo_lote` ON `lotes_selecao` (codigo_lote)"
       ]
     },
     {
@@ -1037,7 +1091,7 @@
           "type": "select",
           "required": false,
           "system": false,
-          "selectValues": ["ELEGIVEL", "SELECIONADO", "EM_ATENDIMENTO", "ATENDIDO", "INATIVO"]
+          "selectValues": ["ELEGIVEL", "SELECIONADO", "APROVADO", "ATENDIDO", "INATIVO"]
         },
         {
           "name": "condicao_principal",
@@ -1110,6 +1164,50 @@
           "required": false,
           "system": false,
           "collectionRef": "beneficiarios"
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "vinculo",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["TITULAR", "DEPENDENTE"]
+        },
+        {
+          "name": "unidade",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "faixa",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "custo_12m",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "aprovado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "data_aprovacao",
+          "type": "date",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -1550,6 +1648,13 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "perfil",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["GESTOR_VENART", "GESTOR_PROGRAMA", "GESTOR_RH", "OPERACAO"]
         }
       ],
       "indexes": []
@@ -1703,6 +1808,70 @@
       "indexes": [
         "CREATE INDEX idx_logs_usuario ON logs_auditoria (usuario_id)",
         "CREATE INDEX idx_logs_entidade ON logs_auditoria (entidade)"
+      ]
+    },
+    {
+      "name": "config_lgpd_campos",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "perfil",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["GESTOR_VENART", "GESTOR_PROGRAMA", "GESTOR_RH", "OPERACAO"]
+        },
+        {
+          "name": "campo",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["nome", "condicao_principal", "risco", "custo_12m"]
+        },
+        {
+          "name": "visivel",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "atualizado_por",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "atualizado_em",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_config_lgpd_perfil ON config_lgpd_campos (perfil)",
+        "CREATE INDEX idx_config_lgpd_campo ON config_lgpd_campos (campo)"
       ]
     }
   ]

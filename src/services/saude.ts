@@ -9,36 +9,137 @@ import {
   PesquisaSatisfacao,
   User,
   UserPerfil,
+  ConfigLgpdCampo,
+  CampoLgpd,
 } from '@/types/saude'
 
+// Cache em memória para configurações dinâmicas de LGPD
+let lgpdConfigCache: Record<string, boolean> | null = null
+let lgpdConfigPromise: Promise<Record<string, boolean>> | null = null
+
+// Regras padrão caso a coleção ainda esteja sendo carregada
+const defaultLgpdRules: Record<UserPerfil, Record<CampoLgpd, boolean>> = {
+  GESTOR_PROGRAMA: {
+    nome: true,
+    condicao_principal: true,
+    risco: true,
+    custo_12m: true,
+  },
+  GESTOR_VENART: {
+    nome: false,
+    condicao_principal: true,
+    risco: true,
+    custo_12m: true,
+  },
+  GESTOR_RH: {
+    nome: false,
+    condicao_principal: true,
+    risco: true,
+    custo_12m: true,
+  },
+  OPERACAO: {
+    nome: false,
+    condicao_principal: false,
+    risco: false,
+    custo_12m: false,
+  },
+}
+
+export async function fetchLgpdConfig(): Promise<Record<string, boolean>> {
+  if (lgpdConfigCache) return lgpdConfigCache
+  if (lgpdConfigPromise) return lgpdConfigPromise
+
+  lgpdConfigPromise = (async () => {
+    try {
+      const records = await pb.collection('config_lgpd_campos').getFullList<ConfigLgpdCampo>({
+        requestKey: null,
+      })
+      const map: Record<string, boolean> = {}
+      for (const r of records) {
+        map[`${r.perfil}:${r.campo}`] = r.visivel
+      }
+      lgpdConfigCache = map
+      return map
+    } catch {
+      // Fallback para mapa default
+      const map: Record<string, boolean> = {}
+      for (const [p, campos] of Object.entries(defaultLgpdRules)) {
+        for (const [c, vis] of Object.entries(campos)) {
+          map[`${p}:${c}`] = vis
+        }
+      }
+      lgpdConfigCache = map
+      return map
+    } finally {
+      lgpdConfigPromise = null
+    }
+  })()
+
+  return lgpdConfigPromise
+}
+
+export function isCampoVisivel(
+  perfil: UserPerfil,
+  campo: CampoLgpd,
+  configMap?: Record<string, boolean> | null,
+): boolean {
+  const map = configMap || lgpdConfigCache
+  if (map && typeof map[`${perfil}:${campo}`] === 'boolean') {
+    return map[`${perfil}:${campo}`]
+  }
+  return defaultLgpdRules[perfil]?.[campo] ?? true
+}
+
 /**
- * Aplica LGPD Sanitization com base no perfil do usuário logado:
- * - GESTOR: dados totais, sem censura (vê risco, condição e custo financeiro).
- * - ATENDENTE: dados clínicos parciais (vê risco e condição; custo financeiro é omitido).
- * - RH: dados puramente administrativos (vê contato, matrícula, unidade; risco, condição, custo e feedback são omitidos).
+ * Sanitiza o beneficiário conforme as regras dinâmicas de LGPD do perfil:
+ * - Se nome não for visível, anonimiza com 'Beneficiário (LGPD) [MAT-XXXXX]'
+ * - Se condicao_principal não for visível, define como undefined
+ * - Se risco não for visível, define como undefined
+ * - Se custo_12m não for visível, define como undefined
  */
-export function applyLgpdFilter(beneficiario: Beneficiario, perfil: UserPerfil): Beneficiario {
-  if (perfil === 'GESTOR') {
-    return beneficiario
+export function applyLgpdFilter(
+  beneficiario: Beneficiario,
+  perfil: UserPerfil,
+  configMap?: Record<string, boolean> | null,
+): Beneficiario {
+  const res: Beneficiario = { ...beneficiario }
+
+  // Harmonizar nomes de campos novos e legados
+  const nomeOriginal = beneficiario.nome || beneficiario.nome_beneficiario || 'Beneficiário'
+  const custoOriginal =
+    beneficiario.custo_12m !== undefined ? beneficiario.custo_12m : beneficiario.custo_12_meses
+
+  const nomeVisivel = isCampoVisivel(perfil, 'nome', configMap)
+  const condicaoVisivel = isCampoVisivel(perfil, 'condicao_principal', configMap)
+  const riscoVisivel = isCampoVisivel(perfil, 'risco', configMap)
+  const custoVisivel = isCampoVisivel(perfil, 'custo_12m', configMap)
+
+  if (!nomeVisivel) {
+    const anonimo = `Beneficiário Protegido (${beneficiario.matricula})`
+    res.nome = anonimo
+    res.nome_beneficiario = anonimo
+  } else {
+    res.nome = nomeOriginal
+    res.nome_beneficiario = nomeOriginal
   }
 
-  if (perfil === 'ATENDENTE') {
-    return {
-      ...beneficiario,
-      custo_12_meses: undefined, // LGPD restrição financeira
-    }
+  if (!condicaoVisivel) {
+    res.condicao_principal = undefined
   }
 
-  if (perfil === 'RH') {
-    return {
-      ...beneficiario,
-      condicao_principal: undefined, // LGPD restrição clínica
-      risco: undefined, // LGPD restrição clínica
-      custo_12_meses: undefined, // LGPD restrição financeira
-    }
+  if (!riscoVisivel) {
+    res.risco = undefined
   }
 
-  return beneficiario
+  if (!custoVisivel) {
+    res.custo_12m = undefined
+    res.custo_12_meses = undefined
+  } else {
+    res.custo_12m = custoOriginal
+    res.custo_12_meses = custoOriginal
+  }
+
+  return res
 }
 
 // ================= BENEFICIARIOS SERVICE =================
@@ -52,37 +153,83 @@ export const BeneficiariosService = {
       perfil?: UserPerfil
     } = {},
   ) {
-    const { page = 1, perPage = 100, filter = '', sort = '-created', perfil = 'GESTOR' } = params
+    const {
+      page = 1,
+      perPage = 100,
+      filter = '',
+      sort = '-created',
+      perfil = 'GESTOR_VENART',
+    } = params
+
+    // Assegurar carregamento de config LGPD
+    const configMap = await fetchLgpdConfig()
+
     const result = await pb.collection('beneficiarios').getList(page, perPage, {
       filter,
       sort,
-      expand: 'titular_id,lote_id,atendente_id,selecionado_por',
+      expand: 'titular_id,lote_id,atendente_id,selecionado_por,aprovado_por',
       requestKey: null,
     })
 
     return {
       ...result,
       items: (result.items as unknown as Beneficiario[]).map((item) =>
-        applyLgpdFilter(item, perfil),
+        applyLgpdFilter(item, perfil, configMap),
       ),
     }
   },
 
-  async getById(id: string, perfil: UserPerfil = 'GESTOR'): Promise<Beneficiario> {
+  async getById(id: string, perfil: UserPerfil = 'GESTOR_VENART'): Promise<Beneficiario> {
+    const configMap = await fetchLgpdConfig()
     const record = await pb.collection('beneficiarios').getOne(id, {
-      expand: 'titular_id,lote_id,atendente_id,selecionado_por',
+      expand: 'titular_id,lote_id,atendente_id,selecionado_por,aprovado_por',
       requestKey: null,
     })
-    return applyLgpdFilter(record as unknown as Beneficiario, perfil)
+    return applyLgpdFilter(record as unknown as Beneficiario, perfil, configMap)
   },
 
   async create(data: Partial<Beneficiario>): Promise<Beneficiario> {
-    const record = await pb.collection('beneficiarios').create(data)
+    const payload = {
+      ...data,
+      nome: data.nome || data.nome_beneficiario,
+      nome_beneficiario: data.nome || data.nome_beneficiario,
+      unidade: data.unidade || data.unidade_regiao,
+      unidade_regiao: data.unidade || data.unidade_regiao,
+      vinculo: data.vinculo || data.tipo_vinculo || 'TITULAR',
+      tipo_vinculo: data.vinculo || data.tipo_vinculo || 'TITULAR',
+      faixa: data.faixa || data.faixa_etaria || '30-39',
+      faixa_etaria: data.faixa || data.faixa_etaria || '30-39',
+      custo_12m: data.custo_12m !== undefined ? data.custo_12m : data.custo_12_meses,
+      custo_12_meses: data.custo_12m !== undefined ? data.custo_12m : data.custo_12_meses,
+    }
+    const record = await pb.collection('beneficiarios').create(payload)
     return record as unknown as Beneficiario
   },
 
   async update(id: string, data: Partial<Beneficiario>): Promise<Beneficiario> {
-    const record = await pb.collection('beneficiarios').update(id, data)
+    const payload: any = { ...data }
+    if (data.nome || data.nome_beneficiario) {
+      payload.nome = data.nome || data.nome_beneficiario
+      payload.nome_beneficiario = data.nome || data.nome_beneficiario
+    }
+    if (data.unidade || data.unidade_regiao) {
+      payload.unidade = data.unidade || data.unidade_regiao
+      payload.unidade_regiao = data.unidade || data.unidade_regiao
+    }
+    if (data.vinculo || data.tipo_vinculo) {
+      payload.vinculo = data.vinculo || data.tipo_vinculo
+      payload.tipo_vinculo = data.vinculo || data.tipo_vinculo
+    }
+    if (data.faixa || data.faixa_etaria) {
+      payload.faixa = data.faixa || data.faixa_etaria
+      payload.faixa_etaria = data.faixa || data.faixa_etaria
+    }
+    if (data.custo_12m !== undefined || data.custo_12_meses !== undefined) {
+      const v = data.custo_12m !== undefined ? data.custo_12m : data.custo_12_meses
+      payload.custo_12m = v
+      payload.custo_12_meses = v
+    }
+    const record = await pb.collection('beneficiarios').update(id, payload)
     return record as unknown as Beneficiario
   },
 
@@ -94,30 +241,71 @@ export const BeneficiariosService = {
     }
   },
 
+  // Transição 1: ELEGIVEL -> SELECIONADO
   async selectForProgram(ids: string[], userId: string): Promise<void> {
     const now = new Date().toISOString()
     for (const id of ids) {
       await pb.collection('beneficiarios').update(id, {
         status: 'SELECIONADO',
         selecionado_por: userId,
+        data_selecao: now,
         data_selecao_gestao: now,
       })
     }
   },
 
-  async distributeToAtendente(beneficiarioIds: string[], atendenteId: string): Promise<void> {
+  // Transição 2: SELECIONADO -> APROVADO
+  async approveForProgram(ids: string[], userId: string): Promise<void> {
+    const now = new Date().toISOString()
+    for (const id of ids) {
+      await pb.collection('beneficiarios').update(id, {
+        status: 'APROVADO',
+        aprovado_por: userId,
+        data_aprovacao: now,
+      })
+    }
+  },
+
+  // Transição 3: Distribuir para operador (status APROVADO -> ATENDIDO ou em atendimento)
+  async distributeToAtendente(
+    beneficiarioIds: string[],
+    operadorId: string,
+    markAtendido = false,
+  ): Promise<void> {
     const now = new Date().toISOString()
     for (const id of beneficiarioIds) {
       await pb.collection('beneficiarios').update(id, {
-        atendente_id: atendenteId,
+        atendente_id: operadorId,
         data_distribuicao: now,
-        status: 'EM_ATENDIMENTO',
+        status: markAtendido ? 'ATENDIDO' : 'APROVADO',
       })
     }
   },
 }
 
-// ================= USUÁRIOS & ATENDENTES SERVICE =================
+// ================= LGPD CONFIG SERVICE =================
+export const ConfigLgpdService = {
+  async listAll(): Promise<ConfigLgpdCampo[]> {
+    const records = await pb.collection('config_lgpd_campos').getFullList({
+      sort: 'perfil,campo',
+      requestKey: null,
+    })
+    return records as unknown as ConfigLgpdCampo[]
+  },
+
+  async updateVisibilidade(id: string, visivel: boolean, userId: string): Promise<void> {
+    await pb.collection('config_lgpd_campos').update(id, {
+      visivel,
+      atualizado_por: userId,
+      atualizado_em: new Date().toISOString(),
+    })
+    // Invalidar cache
+    lgpdConfigCache = null
+    await fetchLgpdConfig()
+  },
+}
+
+// ================= USUÁRIOS SERVICE =================
 export const UsuariosService = {
   async list(filter = '', sort = 'name') {
     const result = await pb.collection('users').getFullList({
@@ -128,13 +316,18 @@ export const UsuariosService = {
     return result as unknown as User[]
   },
 
-  async listAtendentes() {
+  async listOperacao() {
     const result = await pb.collection('users').getFullList({
-      filter: 'perfil = "ATENDENTE" && ativo = true',
+      filter: 'perfil = "OPERACAO" && ativo = true',
       sort: 'name',
       requestKey: null,
     })
     return result as unknown as User[]
+  },
+
+  // Retrocompatibilidade
+  async listAtendentes() {
+    return this.listOperacao()
   },
 
   async getById(id: string): Promise<User> {
@@ -145,10 +338,12 @@ export const UsuariosService = {
   async create(data: Partial<User> & { password?: string }): Promise<User> {
     const payload: any = {
       ...data,
-      password: data.password || 'senha123',
-      passwordConfirm: data.password || 'senha123',
+      password: data.password || '12345678',
+      passwordConfirm: data.password || '12345678',
       emailVisibility: true,
       verified: true,
+      tema_preferido: data.tema_preferido || 'LIGHT',
+      categoria_profissional: data.categoria_profissional || 'ADMINISTRATIVO',
     }
     const record = await pb.collection('users').create(payload)
     return record as unknown as User
@@ -168,6 +363,11 @@ export const UsuariosService = {
     const record = await pb.collection('users').update(id, { ativo })
     return record as unknown as User
   },
+
+  async updateTema(id: string, tema: 'LIGHT' | 'DARK'): Promise<User> {
+    const record = await pb.collection('users').update(id, { tema_preferido: tema })
+    return record as unknown as User
+  },
 }
 
 // ================= LOTES SELEÇÃO SERVICE =================
@@ -175,7 +375,7 @@ export const LotesService = {
   async list() {
     const records = await pb.collection('lotes_selecao').getFullList({
       sort: '-created',
-      expand: 'criado_por',
+      expand: 'criado_por,usuario_importador_id',
       requestKey: null,
     })
     return records as unknown as LoteSelecao[]
@@ -183,29 +383,40 @@ export const LotesService = {
 
   async createWithBeneficiarios(
     loteData: {
-      lote_id: string
-      total_beneficiarios: number
+      codigo_lote: string
+      tipo_lote?: 'NOVO_REGISTRO' | 'ATUALIZACAO'
+      total_registros: number
       custo_total: number
-      criado_por: string
+      usuario_importador_id: string
     },
     beneficiariosList: Array<Partial<Beneficiario>>,
   ) {
+    const now = new Date().toISOString()
     const loteRecord = await pb.collection('lotes_selecao').create({
-      ...loteData,
+      codigo_lote: loteData.codigo_lote,
+      lote_id: loteData.codigo_lote,
+      tipo_lote: loteData.tipo_lote || 'NOVO_REGISTRO',
+      data_importacao: now,
+      data_selecao: now,
+      usuario_importador_id: loteData.usuario_importador_id,
+      criado_por: loteData.usuario_importador_id,
+      total_registros: loteData.total_registros,
+      total_beneficiarios: loteData.total_registros,
+      custo_total: loteData.custo_total,
+      status_processamento: 'PROCESSADO',
       status: 'PROCESSADO',
-      data_selecao: new Date().toISOString(),
     })
 
     const createdBeneficiarios: Beneficiario[] = []
     for (const b of beneficiariosList) {
-      const created = await pb.collection('beneficiarios').create({
+      const created = await BeneficiariosService.create({
         ...b,
         lote_id: loteRecord.id,
         status: b.status || 'ELEGIVEL',
         ativo: true,
-        data_selecao: new Date().toISOString(),
+        data_selecao: now,
       })
-      createdBeneficiarios.push(created as unknown as Beneficiario)
+      createdBeneficiarios.push(created)
     }
 
     return {
@@ -306,20 +517,15 @@ export const FichasService = {
     return record as unknown as FichaAtendimento
   },
 
-  /**
-   * Atualiza uma ficha com incremento de versão e registro de auditoria em historico_fichas
-   */
   async updateWithVersion(
     id: string,
     newData: Partial<FichaAtendimento>,
     userId: string,
     changeDescription = 'Atualização da ficha de atendimento',
   ): Promise<FichaAtendimento> {
-    // 1. Obter estado atual
     const current = await pb.collection('fichas_atendimento').getOne(id)
     const newVersion = (current.versao || 1) + 1
 
-    // 2. Registrar no historico_fichas
     try {
       await pb.collection('historico_fichas').create({
         ficha_id: id,
@@ -341,10 +547,9 @@ export const FichasService = {
         alterado_por: userId,
       })
     } catch (e) {
-      console.warn('Falha ao gravar historico_fichas (não-bloqueante):', e)
+      console.warn('Falha ao gravar historico_fichas:', e)
     }
 
-    // 3. Atualizar a ficha
     const updated = await pb.collection('fichas_atendimento').update(id, {
       ...newData,
       versao: newVersion,
@@ -353,9 +558,6 @@ export const FichasService = {
     return updated as unknown as FichaAtendimento
   },
 
-  /**
-   * Finaliza atendimento com ALTA e dispara simulação de pesquisa de satisfação
-   */
   async finalizarComAlta(
     fichaId: string,
     beneficiarioId: string,
@@ -368,7 +570,6 @@ export const FichasService = {
     const now = new Date().toISOString()
     const token = `survey-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 
-    // 1. Atualizar ficha com Alta e data de envio de pesquisa
     const ficha = await this.updateWithVersion(
       fichaId,
       {
@@ -381,7 +582,6 @@ export const FichasService = {
       'Finalização com ALTA e envio de pesquisa de satisfação',
     )
 
-    // 2. Atualizar status do beneficiário para ATENDIDO
     try {
       await pb.collection('beneficiarios').update(beneficiarioId, {
         status: 'ATENDIDO',
@@ -390,7 +590,6 @@ export const FichasService = {
       console.warn('Erro ao atualizar status beneficiario:', err)
     }
 
-    // 3. Criar registro de pesquisa de satisfação com token público único
     let surveyRecord: PesquisaSatisfacao | null = null
     try {
       surveyRecord = (await pb.collection('pesquisas_satisfacao').create({
@@ -450,7 +649,6 @@ export const PesquisasService = {
       status: 'RESPONDIDO',
     })
 
-    // Sincronizar na ficha de atendimento correspondente
     if (survey.ficha_id) {
       try {
         await pb.collection('fichas_atendimento').update(survey.ficha_id, {

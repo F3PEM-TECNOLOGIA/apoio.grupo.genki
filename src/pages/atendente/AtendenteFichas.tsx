@@ -27,8 +27,8 @@ export default function AtendenteFichasPage() {
     setLoading(true)
     try {
       const res = await FichasService.list('', '-created')
-      // Filtrar para o atendente logado
-      if (user?.perfil === 'ATENDENTE') {
+      // Filtrar para o atendente/operador logado
+      if (user?.perfil === 'OPERACAO') {
         setFichas(
           res.filter(
             (f) =>
@@ -49,11 +49,11 @@ export default function AtendenteFichasPage() {
   }, [user])
 
   const filtered = fichas.filter((f) => {
+    const benefNome =
+      f.expand?.beneficiario_id?.nome || f.expand?.beneficiario_id?.nome_beneficiario || ''
     const matchesSearch =
       (f.ficha_id || '').toLowerCase().includes(search.toLowerCase()) ||
-      (f.expand?.beneficiario_id?.nome_beneficiario || '')
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
+      benefNome.toLowerCase().includes(search.toLowerCase()) ||
       (f.condicao_principal || '').toLowerCase().includes(search.toLowerCase())
 
     const matchesStatus = statusFilter === 'ALL' || f.status_geral === statusFilter
@@ -138,11 +138,14 @@ export default function AtendenteFichasPage() {
                       <td className="p-3.5 font-mono font-medium">{f.ficha_id}</td>
                       <td className="p-3.5">
                         <div className="font-semibold text-slate-900">
-                          {f.expand?.beneficiario_id?.nome_beneficiario || 'Paciente'}
+                          {f.expand?.beneficiario_id?.nome ||
+                            f.expand?.beneficiario_id?.nome_beneficiario ||
+                            'Paciente'}
                         </div>
                         <div className="text-[11px] text-slate-500">
                           {f.expand?.beneficiario_id?.matricula} •{' '}
-                          {f.expand?.beneficiario_id?.unidade_regiao}
+                          {f.expand?.beneficiario_id?.unidade ||
+                            f.expand?.beneficiario_id?.unidade_regiao}
                         </div>
                       </td>
                       <td className="p-3.5">

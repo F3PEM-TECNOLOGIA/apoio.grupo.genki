@@ -1,55 +1,51 @@
 import React from 'react'
-import { ShieldCheck, Lock } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ShieldCheck, ShieldAlert, Shield } from 'lucide-react'
+import { UserPerfil } from '@/types/saude'
 
-interface LgpdNoticeProps {
-  message?: string
-  inline?: boolean
-  perfil?: string
-}
-
-export const LgpdNotice: React.FC<LgpdNoticeProps> = ({ message, inline = false, perfil }) => {
-  const defaultText =
-    perfil === 'RH'
-      ? 'Filtro LGPD Ativo: Campos clínicos, diagnósticos e financeiros estão ocultos para este perfil de acesso.'
-      : perfil === 'ATENDENTE'
-        ? 'Filtro LGPD Parcial: Acesso aos dados clínicos autorizado para cuidado à saúde. Custos financeiros ocultos.'
-        : 'Proteção LGPD Ativa: Acesso e operações monitoradas e auditadas conforme Lei 13.709/2018.'
-
-  const displayMsg = message || defaultText
-
-  if (inline) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800 cursor-help">
-            <Lock className="w-3 h-3 text-teal-600 dark:text-teal-400" />
-            <span>LGPD</span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs text-xs">
-          {displayMsg}
-        </TooltipContent>
-      </Tooltip>
-    )
-  }
+export function LgpdNotice({ perfil }: { perfil: UserPerfil | string }) {
+  const isGestorPrograma = perfil === 'GESTOR_PROGRAMA'
+  const isGestorVenart = perfil === 'GESTOR_VENART'
+  const isGestorRh = perfil === 'GESTOR_RH'
+  const isOperacao = perfil === 'OPERACAO'
 
   return (
-    <div className="flex items-center justify-between gap-3 p-3 bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/80 rounded-lg text-xs text-teal-900 dark:text-teal-100">
-      <div className="flex items-center gap-2.5">
-        <div className="p-1.5 bg-teal-100 dark:bg-teal-900 rounded-md text-teal-700 dark:text-teal-300">
-          <ShieldCheck className="w-4 h-4" />
-        </div>
-        <div>
-          <span className="font-semibold text-teal-950 dark:text-teal-50 mr-1.5">
-            LGPD em Conformidade:
-          </span>
-          <span>{displayMsg}</span>
-        </div>
+    <div
+      className={`rounded-lg border p-3 flex items-start gap-3 text-xs mb-4 ${
+        isGestorPrograma
+          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200'
+          : isGestorVenart
+            ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800 text-purple-800 dark:text-purple-200'
+            : isGestorRh
+              ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200'
+              : 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200'
+      }`}
+    >
+      {isGestorPrograma ? (
+        <Shield className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+      ) : isOperacao ? (
+        <ShieldAlert className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+      ) : (
+        <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+      )}
+      <div>
+        <p className="font-semibold mb-0.5">
+          {isGestorPrograma && 'Conformidade LGPD — Perfil GESTOR_PROGRAMA (Acesso Total)'}
+          {isGestorVenart && 'Conformidade LGPD — Perfil GESTOR_VENART (Nome Oculto)'}
+          {isGestorRh && 'Conformidade LGPD — Perfil GESTOR_RH (Nome Oculto)'}
+          {isOperacao && 'Conformidade LGPD — Perfil OPERAÇÃO (Campos Sensíveis Protegidos)'}
+        </p>
+        <p className="opacity-90">
+          {isGestorPrograma &&
+            'Seu perfil tem autorização médica irrestrita para visualizar nomes, condições clínicas, classificação de risco e custos.'}
+          {isGestorVenart &&
+            'Nomes de beneficiários são mantidos anonimizados por padrão (config_lgpd_campos) para privacidade, com visualização de riscos e indicadores financeiros.'}
+          {isGestorRh &&
+            'Nomes anonimizados por padrão para preservar sigilo, mantendo dados clínicos agregados e de custos visíveis para gestão assistencial.'}
+          {isOperacao &&
+            'Campos clínicos sensíveis e custos são ocultados ou mascarados conforme governança da coleção config_lgpd_campos.'}
+        </p>
       </div>
-      <span className="hidden sm:inline-block px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-teal-200/60 dark:bg-teal-800 text-teal-800 dark:text-teal-200 rounded">
-        Auditoria Ativa
-      </span>
     </div>
   )
 }
+export default LgpdNotice

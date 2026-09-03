@@ -44,7 +44,7 @@ export async function getUsuarios(): Promise<User[]> {
 
 export async function getAtendentes(): Promise<User[]> {
   return await pb.collection('users').getFullList<User>({
-    filter: 'perfil = "ATENDENTE" && ativo = true',
+    filter: '(perfil = "OPERACAO" || perfil = "ATENDENTE") && ativo = true',
     sort: 'name',
   })
 }
@@ -434,39 +434,24 @@ export function aplicarFiltroLgpdBeneficiario(
   b: Beneficiario,
   perfil?: UserPerfil,
 ): Partial<Beneficiario> {
-  if (perfil === 'GESTOR') {
+  if (perfil === 'GESTOR_PROGRAMA' || perfil === 'GESTOR') {
     return b
   }
 
-  if (perfil === 'ATENDENTE') {
-    // ATENDENTE: NÃO vê custo_12_meses
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { custo_12_meses, ...rest } = b
-    return rest
+  if (perfil === 'GESTOR_VENART' || perfil === 'GESTOR_RH' || perfil === 'RH') {
+    return {
+      ...b,
+      nome: `Beneficiário (${b.matricula})`,
+      nome_beneficiario: `Beneficiário (${b.matricula})`,
+    }
   }
 
-  if (perfil === 'RH') {
-    // RH: NÃO vê custo_12_meses, condicao_principal, risco
+  if (perfil === 'OPERACAO' || perfil === 'ATENDENTE') {
+    const { custo_12_meses, custo_12m, condicao_principal, risco, ...rest } = b as any
     return {
-      id: b.id,
-      id_externo: b.id_externo,
-      nome_beneficiario: b.nome_beneficiario,
-      matricula: b.matricula,
-      unidade_regiao: b.unidade_regiao,
-      tipo_vinculo: b.tipo_vinculo,
-      faixa_etaria: b.faixa_etaria,
-      telefone: b.telefone,
-      celular: b.celular,
-      email: b.email,
-      data_selecao: b.data_selecao,
-      status: b.status,
-      permite_contato_whatsapp_sms: b.permite_contato_whatsapp_sms,
-      atendente_id: b.atendente_id,
-      data_distribuicao: b.data_distribuicao,
-      ativo: b.ativo,
-      created: b.created,
-      updated: b.updated,
-      expand: b.expand,
+      ...rest,
+      nome: `Beneficiário (${b.matricula})`,
+      nome_beneficiario: `Beneficiário (${b.matricula})`,
     }
   }
 

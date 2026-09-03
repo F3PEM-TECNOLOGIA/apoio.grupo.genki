@@ -411,11 +411,11 @@ O sistema encontra-se totalmente funcional no ambiente Skip Cloud, com frontend 
 
 Utilize esta seção para registrar customizações, novas regras ou apontamentos específicos da sua organização:
 
-- **Ajustar / Personalizar:** ********************************\_********************************
-- **Definição de Novos Critérios de Risco:** ************************\_************************
-- **Políticas Adicionais de LGPD / DPO:** ************************\_\_\_************************
-- **Integrações Legadas Requeridas:** **************************\_\_\_**************************
+- **Ajustar / Personalizar:** **************\*\*\*\***************\_**************\*\*\*\***************
+- **Definição de Novos Critérios de Risco:** **********\*\*\*\***********\_**********\*\*\*\***********
+- **Políticas Adicionais de LGPD / DPO:** **********\*\*\*\***********\_\_\_**********\*\*\*\***********
+- **Integrações Legadas Requeridas:** ************\*\*************\_\_\_************\*\*************
 - **Aprovações / Sign-off do Produto:**
-  - _Gestor Médico:_ ************\_************ Data: **_/_**/**\_\_**
-  - _Responsável RH:_ ************\_************ Data: **_/_**/**\_\_**
-  - _DPO / Jurídico:_ ************\_************ Data: **_/_**/**\_\_**
+  - _Gestor Médico:_ ****\*\*\*\*****\_****\*\*\*\***** Data: **_/_**/**\_\_**
+  - _Responsável RH:_ ****\*\*\*\*****\_****\*\*\*\***** Data: **_/_**/**\_\_**
+  - _DPO / Jurídico:_ ****\*\*\*\*****\_****\*\*\*\***** Data: **_/_**/**\_\_**

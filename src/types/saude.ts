@@ -1,13 +1,15 @@
-export type UserPerfil = 'GESTOR' | 'RH' | 'ATENDENTE'
-export type TipoProfissional = 'ENFERMEIRO' | 'MEDICO'
-export type StatusBeneficiario =
-  | 'ELEGIVEL'
-  | 'SELECIONADO'
-  | 'EM_ATENDIMENTO'
-  | 'ATENDIDO'
-  | 'INATIVO'
+export type UserPerfil = 'GESTOR_VENART' | 'GESTOR_PROGRAMA' | 'GESTOR_RH' | 'OPERACAO'
+
+export type TemaPreferido = 'LIGHT' | 'DARK'
+
+export type CategoriaProfissional = 'ENFERMEIRO' | 'MEDICO' | 'ADMINISTRATIVO'
+export type TipoProfissional = 'ENFERMEIRO' | 'MEDICO' | 'ADMINISTRATIVO'
+
+export type StatusBeneficiario = 'ELEGIVEL' | 'SELECIONADO' | 'APROVADO' | 'ATENDIDO' | 'INATIVO'
+
 export type TipoVinculo = 'TITULAR' | 'DEPENDENTE'
 export type NivelRisco = 'BAIXO' | 'MEDIO' | 'ALTO' | 'CRITICO'
+export type TipoLote = 'NOVO_REGISTRO' | 'ATUALIZACAO'
 export type StatusLote = 'IMPORTADO' | 'PROCESSADO' | 'ERRO'
 export type PrioridadePlano = 'BAIXA' | 'MEDIA' | 'ALTA' | 'URGENTE'
 export type MeioContato = 'LIGACAO_TELEFONICA' | 'WHATSAPP' | 'EMAIL' | 'SMS'
@@ -22,13 +24,28 @@ export type StatusGeralFicha =
 export type TipoApontamentoRH = 'SELECAO' | 'EVOLUCAO' | 'VOLUMETRIA' | 'CUSTO'
 export type StatusPesquisa = 'ENVIADO' | 'RESPONDIDO' | 'EXPIRADO'
 
+export type CampoLgpd = 'nome' | 'condicao_principal' | 'risco' | 'custo_12m'
+
+export interface ConfigLgpdCampo {
+  id: string
+  perfil: UserPerfil
+  campo: CampoLgpd
+  visivel: boolean
+  atualizado_por?: string
+  atualizado_em?: string
+  created?: string
+  updated?: string
+}
+
 export interface User {
   id: string
   name: string
   email: string
   perfil: UserPerfil
-  registro_profissional?: string
+  tema_preferido?: TemaPreferido
+  categoria_profissional?: CategoriaProfissional
   tipo_profissional?: TipoProfissional
+  registro_profissional?: string
   unidade_regiao?: string
   ativo: boolean
   created?: string
@@ -37,50 +54,64 @@ export interface User {
 
 export interface Beneficiario {
   id: string
-  id_externo: string
-  nome_beneficiario: string
+  id_externo?: string
+  nome?: string
+  nome_beneficiario?: string
   matricula: string
-  unidade_regiao: string
-  tipo_vinculo: TipoVinculo
+  unidade?: string
+  unidade_regiao?: string
+  vinculo?: TipoVinculo
+  tipo_vinculo?: TipoVinculo
+  faixa?: string
+  faixa_etaria?: string
+  telefone?: string
+  celular?: string
+  email?: string
+  permite_contato_whatsapp_sms?: boolean
+  status: StatusBeneficiario
+  lote_id?: string
+  selecionado_por?: string
+  data_selecao?: string
+  data_selecao_gestao?: string
+  aprovado_por?: string
+  data_aprovacao?: string
+  atendente_id?: string
+  data_distribuicao?: string
+  ativo: boolean
+  // Dados sensíveis sujeitos a controle LGPD
+  condicao_principal?: string
+  risco?: NivelRisco
+  custo_12m?: number
+  custo_12_meses?: number
   titular_id?: string
   expand?: {
     titular_id?: Beneficiario
     lote_id?: LoteSelecao
     atendente_id?: User
     selecionado_por?: User
+    aprovado_por?: User
   }
-  faixa_etaria: string
-  telefone: string
-  celular: string
-  email: string
-  permite_contato_whatsapp_sms: boolean
-  status: StatusBeneficiario
-  data_selecao?: string
-  lote_id?: string
-  selecionado_por?: string
-  data_selecao_gestao?: string
-  atendente_id?: string
-  data_distribuicao?: string
-  ativo: boolean
-  // SENSÍVEIS LGPD (Gestor vê tudo; Atendente vê condicao e risco; RH NUNCA vê)
-  condicao_principal?: string
-  risco?: NivelRisco
-  // HIPER SENSÍVEIS LGPD (Apenas Gestor vê; Atendente e RH NUNCA vêem)
-  custo_12_meses?: number
   created?: string
   updated?: string
 }
 
 export interface LoteSelecao {
   id: string
-  lote_id: string
-  data_selecao: string
-  status: StatusLote
-  total_beneficiarios: number
-  custo_total: number
+  codigo_lote?: string
+  lote_id?: string
+  tipo_lote?: TipoLote
+  data_importacao?: string
+  data_selecao?: string
+  usuario_importador_id?: string
   criado_por?: string
+  total_registros?: number
+  total_beneficiarios?: number
+  custo_total?: number
+  status_processamento?: StatusLote
+  status?: StatusLote
   expand?: {
     criado_por?: User
+    usuario_importador_id?: User
   }
   created?: string
   updated?: string
@@ -195,7 +226,8 @@ export interface ApontamentoRH {
 export interface DashboardCache {
   id: string
   atendente_id?: string
-  tipo_dashboard: 'ATENDENTE' | 'GESTOR' | 'COMPARATIVO' | 'SATISFACAO'
+  perfil?: UserPerfil
+  tipo_dashboard?: 'ATENDENTE' | 'GESTOR' | 'COMPARATIVO' | 'SATISFACAO'
   periodo_referencia: string
   indicadores: Record<string, unknown>
   data_atualizacao?: string

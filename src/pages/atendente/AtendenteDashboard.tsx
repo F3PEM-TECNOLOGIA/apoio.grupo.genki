@@ -34,7 +34,7 @@ export default function AtendenteDashboard() {
       try {
         const [fRes, bRes, pRes] = await Promise.all([
           FichasService.list(),
-          BeneficiariosService.list({ perPage: 200, perfil: 'ATENDENTE' }),
+          BeneficiariosService.list({ perPage: 1200, perfil: 'OPERACAO' }),
           PesquisasService.listAll(),
         ])
 
@@ -211,7 +211,9 @@ export default function AtendenteDashboard() {
                       <td className="p-3.5 font-mono font-medium">{f.ficha_id}</td>
                       <td className="p-3.5">
                         <div className="font-semibold text-slate-900">
-                          {f.expand?.beneficiario_id?.nome_beneficiario || 'Paciente'}
+                          {f.expand?.beneficiario_id?.nome ||
+                            f.expand?.beneficiario_id?.nome_beneficiario ||
+                            'Paciente'}
                         </div>
                         <div className="text-[11px] text-slate-500 font-mono">
                           {f.expand?.beneficiario_id?.matricula}

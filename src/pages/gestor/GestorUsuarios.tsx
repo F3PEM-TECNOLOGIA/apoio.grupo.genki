@@ -34,10 +34,12 @@ export default function GestorUsuariosCrud() {
     name: '',
     email: '',
     password: '',
-    perfil: 'ATENDENTE',
+    perfil: 'OPERACAO',
     tipo_profissional: 'ENFERMEIRO',
+    categoria_profissional: 'ENFERMEIRO',
     registro_profissional: '',
     unidade_regiao: 'São Paulo',
+    tema_preferido: 'LIGHT',
     ativo: true,
   })
 
@@ -60,11 +62,13 @@ export default function GestorUsuariosCrud() {
     setFormData({
       name: '',
       email: '',
-      password: 'senha123',
-      perfil: 'ATENDENTE',
+      password: '12345678',
+      perfil: 'OPERACAO',
       tipo_profissional: 'ENFERMEIRO',
+      categoria_profissional: 'ENFERMEIRO',
       registro_profissional: 'COREN/SP 000000',
       unidade_regiao: 'São Paulo',
+      tema_preferido: 'LIGHT',
       ativo: true,
     })
     setDialogOpen(true)
@@ -75,10 +79,12 @@ export default function GestorUsuariosCrud() {
     setFormData({
       name: u.name,
       email: u.email,
-      perfil: u.perfil,
-      tipo_profissional: u.tipo_profissional,
+      perfil: u.perfil || 'GESTOR_VENART',
+      tipo_profissional: u.tipo_profissional || 'ADMINISTRATIVO',
+      categoria_profissional: u.categoria_profissional || 'ADMINISTRATIVO',
       registro_profissional: u.registro_profissional,
       unidade_regiao: u.unidade_regiao,
+      tema_preferido: u.tema_preferido || 'LIGHT',
       ativo: u.ativo,
     })
     setDialogOpen(true)
@@ -174,14 +180,16 @@ export default function GestorUsuariosCrud() {
                     <td className="p-3.5">
                       <span
                         className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                          u.perfil === 'GESTOR'
+                          u.perfil === 'GESTOR_VENART'
                             ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                            : u.perfil === 'RH'
-                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                              : 'bg-teal-100 text-teal-800 border border-teal-300'
+                            : u.perfil === 'GESTOR_PROGRAMA'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : u.perfil === 'GESTOR_RH'
+                                ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                : 'bg-teal-100 text-teal-800 border border-teal-300'
                         }`}
                       >
-                        {u.perfil || 'GESTOR'}
+                        {u.perfil || 'GESTOR_VENART'}
                       </span>
                     </td>
                     <td className="p-3.5 text-xs text-slate-700 font-medium">
@@ -277,16 +285,17 @@ export default function GestorUsuariosCrud() {
               <div>
                 <Label className="text-xs font-semibold">Perfil RBAC</Label>
                 <Select
-                  value={formData.perfil || 'ATENDENTE'}
+                  value={formData.perfil || 'OPERACAO'}
                   onValueChange={(val) => setFormData({ ...formData, perfil: val as UserPerfil })}
                 >
                   <SelectTrigger className="text-xs mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="GESTOR">Gestor (Médico/Diretor)</SelectItem>
-                    <SelectItem value="RH">RH (Recursos Humanos)</SelectItem>
-                    <SelectItem value="ATENDENTE">Atendente de Saúde</SelectItem>
+                    <SelectItem value="GESTOR_VENART">GESTOR_VENART</SelectItem>
+                    <SelectItem value="GESTOR_PROGRAMA">GESTOR_PROGRAMA</SelectItem>
+                    <SelectItem value="GESTOR_RH">GESTOR_RH</SelectItem>
+                    <SelectItem value="OPERACAO">OPERACAO</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -305,6 +314,27 @@ export default function GestorUsuariosCrud() {
                   <SelectContent>
                     <SelectItem value="ENFERMEIRO">Enfermeiro(a)</SelectItem>
                     <SelectItem value="MEDICO">Médico(a)</SelectItem>
+                    <SelectItem value="ADMINISTRATIVO">Administrativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold">Tema Preferido</Label>
+                <Select
+                  value={formData.tema_preferido || 'LIGHT'}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, tema_preferido: val as 'LIGHT' | 'DARK' })
+                  }
+                >
+                  <SelectTrigger className="text-xs mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LIGHT">Claro (LIGHT)</SelectItem>
+                    <SelectItem value="DARK">Escuro (DARK)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

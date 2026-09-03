@@ -45,7 +45,7 @@ export default function GestorProgramasCrud() {
     try {
       const [pRes, bRes] = await Promise.all([
         ControleProgramasService.list(),
-        BeneficiariosService.list({ perPage: 150, perfil: 'GESTOR' }),
+        BeneficiariosService.list({ perPage: 1200, perfil: 'GESTOR_PROGRAMA' }),
       ])
       setProgramas(pRes)
       setBeneficiarios(bRes.items)

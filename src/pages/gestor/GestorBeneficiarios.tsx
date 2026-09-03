@@ -56,8 +56,8 @@ export default function GestorBeneficiariosCrud() {
     setLoading(true)
     try {
       const [bRes, aRes] = await Promise.all([
-        BeneficiariosService.list({ perPage: 200, perfil: 'GESTOR' }),
-        UsuariosService.listAtendentes(),
+        BeneficiariosService.list({ perPage: 1200, perfil: 'GESTOR_PROGRAMA' }),
+        UsuariosService.listOperacao(),
       ])
       setBeneficiarios(bRes.items)
       setAtendentes(aRes)
@@ -188,9 +188,13 @@ export default function GestorBeneficiariosCrud() {
                     className={`hover:bg-slate-50 ${!b.ativo ? 'opacity-50 bg-slate-100' : ''}`}
                   >
                     <td className="p-3.5 font-mono text-xs font-medium">{b.matricula}</td>
-                    <td className="p-3.5 font-medium text-slate-900">{b.nome_beneficiario}</td>
-                    <td className="p-3.5 text-xs text-slate-600">{b.tipo_vinculo}</td>
-                    <td className="p-3.5 text-xs text-slate-600">{b.unidade_regiao}</td>
+                    <td className="p-3.5 font-medium text-slate-900">
+                      {b.nome || b.nome_beneficiario}
+                    </td>
+                    <td className="p-3.5 text-xs text-slate-600">{b.vinculo || b.tipo_vinculo}</td>
+                    <td className="p-3.5 text-xs text-slate-600">
+                      {b.unidade || b.unidade_regiao}
+                    </td>
                     <td className="p-3.5 text-xs font-medium text-slate-800 max-w-xs truncate">
                       {b.condicao_principal || '—'}
                     </td>
@@ -198,7 +202,9 @@ export default function GestorBeneficiariosCrud() {
                       <RiscoBadge risco={b.risco} />
                     </td>
                     <td className="p-3.5 font-mono text-xs font-semibold text-emerald-700">
-                      {(b.custo_12_meses || 0).toLocaleString('pt-BR', {
+                      {(
+                        (b.custo_12m !== undefined ? b.custo_12m : b.custo_12_meses) || 0
+                      ).toLocaleString('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',
                       })}
@@ -406,7 +412,7 @@ export default function GestorBeneficiariosCrud() {
                     <SelectContent>
                       <SelectItem value="ELEGIVEL">Elegível</SelectItem>
                       <SelectItem value="SELECIONADO">Selecionado</SelectItem>
-                      <SelectItem value="EM_ATENDIMENTO">Em Atendimento</SelectItem>
+                      <SelectItem value="APROVADO">Aprovado</SelectItem>
                       <SelectItem value="ATENDIDO">Atendido (Alta)</SelectItem>
                       <SelectItem value="INATIVO">Inativo</SelectItem>
                     </SelectContent>

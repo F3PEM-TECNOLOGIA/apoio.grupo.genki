@@ -118,7 +118,7 @@ export default function AtendenteFichaDetalhesPage() {
       setLoading(true)
       try {
         const [bRes, pRes, progRes] = await Promise.all([
-          BeneficiariosService.list({ perPage: 200, perfil: 'ATENDENTE' }),
+          BeneficiariosService.list({ perPage: 1200, perfil: 'OPERACAO' }),
           PlanosAcaoService.list('ativo = true'),
           ControleProgramasService.list(),
         ])
@@ -272,7 +272,7 @@ export default function AtendenteFichaDetalhesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-1">
             {isNew
               ? 'Nova Ficha de Atendimento Clínico'
-              : `Evolução Clínica: ${selectedBeneficiario?.nome_beneficiario || 'Beneficiário'}`}
+              : `Evolução Clínica: ${selectedBeneficiario?.nome || selectedBeneficiario?.nome_beneficiario || 'Beneficiário'}`}
           </h1>
         </div>
 
@@ -319,7 +319,7 @@ export default function AtendenteFichaDetalhesPage() {
                 Paciente Vinculado
               </span>
               <h3 className="text-base font-bold text-slate-900">
-                {selectedBeneficiario.nome_beneficiario}
+                {selectedBeneficiario.nome || selectedBeneficiario.nome_beneficiario}
               </h3>
               <div className="text-xs text-slate-600 flex flex-wrap gap-x-4 gap-y-1">
                 <span>
@@ -389,7 +389,8 @@ export default function AtendenteFichaDetalhesPage() {
                       <SelectContent className="max-h-56">
                         {beneficiarios.map((b) => (
                           <SelectItem key={b.id} value={b.id}>
-                            {b.nome_beneficiario} ({b.matricula}) - {b.unidade_regiao}
+                            {b.nome || b.nome_beneficiario} ({b.matricula}) -{' '}
+                            {b.unidade || b.unidade_regiao}
                           </SelectItem>
                         ))}
                       </SelectContent>

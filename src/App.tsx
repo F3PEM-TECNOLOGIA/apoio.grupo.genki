@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -12,7 +12,7 @@ import LoginPage from './pages/Login'
 import PesquisaPublicaPage from './pages/PesquisaPublica'
 import NotFound from './pages/NotFound'
 
-// Módulo do Gestor
+// Módulo do Gestor (GESTOR_VENART, GESTOR_PROGRAMA)
 import GestorDashboard from './pages/gestor/GestorDashboard'
 import GestorImportarPage from './pages/gestor/GestorImportar'
 import GestorSelecionarPage from './pages/gestor/GestorSelecionar'
@@ -24,11 +24,11 @@ import GestorProgramasCrud from './pages/gestor/GestorProgramas'
 import GestorComparativoPage from './pages/gestor/GestorComparativo'
 import GestorRelatoriosPage from './pages/gestor/GestorRelatorios'
 
-// Módulo do RH
+// Módulo do RH (GESTOR_RH)
 import RhDashboard from './pages/rh/RhDashboard'
 import RhDistribuirPage from './pages/rh/RhDistribuir'
 
-// Módulo do Atendente
+// Módulo da Operação (OPERACAO)
 import AtendenteDashboard from './pages/atendente/AtendenteDashboard'
 import AtendenteFichasPage from './pages/atendente/AtendenteFichas'
 import AtendenteFichaDetalhesPage from './pages/atendente/AtendenteFichaDetalhes'
@@ -47,11 +47,11 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/pesquisa/:token" element={<PesquisaPublicaPage />} />
 
-          {/* Rotas Protegidas do GESTOR */}
+          {/* Rotas Protegidas do GESTOR (GESTOR_VENART, GESTOR_PROGRAMA, GESTOR_RH) */}
           <Route
             path="/gestor"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA']}>
                 <AppLayout>
                   <GestorDashboard />
                 </AppLayout>
@@ -61,7 +61,7 @@ const App = () => (
           <Route
             path="/gestor/importar"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART']}>
                 <AppLayout>
                   <GestorImportarPage />
                 </AppLayout>
@@ -71,7 +71,7 @@ const App = () => (
           <Route
             path="/gestor/selecionar"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA']}>
                 <AppLayout>
                   <GestorSelecionarPage />
                 </AppLayout>
@@ -81,7 +81,7 @@ const App = () => (
           <Route
             path="/gestor/beneficiarios"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA', 'GESTOR_RH']}>
                 <AppLayout>
                   <GestorBeneficiariosCrud />
                 </AppLayout>
@@ -91,7 +91,7 @@ const App = () => (
           <Route
             path="/gestor/usuarios"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART']}>
                 <AppLayout>
                   <GestorUsuariosCrud />
                 </AppLayout>
@@ -101,7 +101,7 @@ const App = () => (
           <Route
             path="/gestor/fichas"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA']}>
                 <AppLayout>
                   <GestorFichasCrud />
                 </AppLayout>
@@ -111,7 +111,7 @@ const App = () => (
           <Route
             path="/gestor/planos-acao"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA']}>
                 <AppLayout>
                   <GestorPlanosAcaoCrud />
                 </AppLayout>
@@ -121,7 +121,7 @@ const App = () => (
           <Route
             path="/gestor/programas"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA']}>
                 <AppLayout>
                   <GestorProgramasCrud />
                 </AppLayout>
@@ -131,7 +131,7 @@ const App = () => (
           <Route
             path="/gestor/comparativo"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA']}>
                 <AppLayout>
                   <GestorComparativoPage />
                 </AppLayout>
@@ -141,7 +141,7 @@ const App = () => (
           <Route
             path="/gestor/relatorios"
             element={
-              <ProtectedRoute allowedRoles={['GESTOR']}>
+              <ProtectedRoute allowedRoles={['GESTOR_VENART', 'GESTOR_PROGRAMA', 'GESTOR_RH']}>
                 <AppLayout>
                   <GestorRelatoriosPage />
                 </AppLayout>
@@ -149,11 +149,11 @@ const App = () => (
             }
           />
 
-          {/* Rotas Protegidas do RH */}
+          {/* Rotas Protegidas do GESTOR_RH */}
           <Route
             path="/rh"
             element={
-              <ProtectedRoute allowedRoles={['RH']}>
+              <ProtectedRoute allowedRoles={['GESTOR_RH', 'GESTOR_VENART']}>
                 <AppLayout>
                   <RhDashboard />
                 </AppLayout>
@@ -163,7 +163,7 @@ const App = () => (
           <Route
             path="/rh/distribuir"
             element={
-              <ProtectedRoute allowedRoles={['RH']}>
+              <ProtectedRoute allowedRoles={['GESTOR_RH', 'GESTOR_VENART']}>
                 <AppLayout>
                   <RhDistribuirPage />
                 </AppLayout>
@@ -171,11 +171,11 @@ const App = () => (
             }
           />
 
-          {/* Rotas Protegidas do ATENDENTE */}
+          {/* Rotas Protegidas da OPERACAO */}
           <Route
             path="/atendente"
             element={
-              <ProtectedRoute allowedRoles={['ATENDENTE']}>
+              <ProtectedRoute allowedRoles={['OPERACAO', 'GESTOR_PROGRAMA']}>
                 <AppLayout>
                   <AtendenteDashboard />
                 </AppLayout>
@@ -185,7 +185,7 @@ const App = () => (
           <Route
             path="/atendente/fichas"
             element={
-              <ProtectedRoute allowedRoles={['ATENDENTE', 'GESTOR']}>
+              <ProtectedRoute allowedRoles={['OPERACAO', 'GESTOR_PROGRAMA', 'GESTOR_VENART']}>
                 <AppLayout>
                   <AtendenteFichasPage />
                 </AppLayout>
@@ -195,7 +195,7 @@ const App = () => (
           <Route
             path="/atendente/fichas/:id"
             element={
-              <ProtectedRoute allowedRoles={['ATENDENTE', 'GESTOR']}>
+              <ProtectedRoute allowedRoles={['OPERACAO', 'GESTOR_PROGRAMA', 'GESTOR_VENART']}>
                 <AppLayout>
                   <AtendenteFichaDetalhesPage />
                 </AppLayout>
