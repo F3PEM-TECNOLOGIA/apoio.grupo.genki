@@ -52,10 +52,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-teal-500 text-white shadow-xl shadow-teal-500/20 mb-1">
             <HeartPulse className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Meu Concierge de Saúde</h1>
-          <p className="text-sm text-slate-300">
-            Plataforma Corporativa de Gestão e Concierge Clínico
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Apoio Grupo Genki</h1>
+          <p className="text-sm text-slate-300">Plataforma Apoio Saúde</p>
         </div>
 
         {/* Card Formulário */}

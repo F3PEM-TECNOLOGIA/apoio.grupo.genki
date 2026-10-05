@@ -8,7 +8,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-        <div className="animate-pulse text-sm">Carregando Meu Concierge de Saúde...</div>
+        <div className="animate-pulse text-sm">Carregando Apoio Grupo Genki...</div>
       </div>
     )
   }

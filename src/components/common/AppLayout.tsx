@@ -124,7 +124,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <HeartPulse className="w-5 h-5" />
           </div>
           <span className="font-bold text-slate-800 dark:text-slate-100 text-sm tracking-tight">
-            Meu Concierge
+            Apoio Grupo Genki
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -155,9 +155,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <h1 className="font-bold text-base text-white tracking-wide leading-none">
-                Concierge
+                Apoio Grupo Genki
               </h1>
-              <span className="text-[11px] text-teal-400 font-medium">Saúde Corporativa</span>
+              <span className="text-[11px] text-teal-400 font-medium">Plataforma Apoio Saúde</span>
             </div>
           </div>
           <button
